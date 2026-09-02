@@ -168,29 +168,19 @@ def compute_month_view(mes_key, state, taxonomia, feriados_todos, hoje):
         ]
     else:
         mtd = compute_mtd(mes_key, hoje, feriados_todos)
-        linha = (
+        view["mtdLine"] = (
             f'MTD {_ddmm(mtd["cutoff"].isoformat())} · {mtd["dias_uteis_decorridos"]} de '
             f'{mtd["dias_uteis_total"]} dias úteis (até {_ddmm(mtd["cutoff"].isoformat())})'
         )
-        if mtd["feriados_no_mes"]:
-            linha += " · feriados: " + ", ".join(_ddmm(f) for f in mtd["feriados_no_mes"])
-        view["mtdLine"] = linha
         view["expected"] = mtd["pct_mtd"] * meta
 
-        inicio_semana = hoje - datetime.timedelta(days=hoje.weekday())
-        fim_semana = inicio_semana + datetime.timedelta(days=6)
-        semana_calls = sorted(
-            (c for c in total_a_realizar if inicio_semana <= _to_date(c["data"]) <= fim_semana),
-            key=lambda c: c["data"],
-        )
+        mes_a_realizar = sorted(total_a_realizar, key=lambda c: c["data"])
+        titulo_mes = label.replace(" ", "/")
         view["week"] = {
-            "title": (
-                f'Pipeline desta semana ({_ddmm(inicio_semana.isoformat())}–'
-                f'{_ddmm(fim_semana.isoformat())}) · {len(semana_calls)} calls'
-            ),
+            "title": f"Pipeline do mês ({titulo_mes}) · {len(mes_a_realizar)} calls",
             "calls": [
                 [_ddmm(c["data"]), c["empresa"], c["origem"], c["canal"], apelido(c)]
-                for c in semana_calls
+                for c in mes_a_realizar
             ],
         }
 

@@ -68,7 +68,6 @@ def render(payload, generated_at=""):
             <span class="big" id="m-hero-big"></span>
             <span class="badge" id="m-badge"></span>
           </div>
-          <p class="sub" id="m-hero-sub" style="font-size:11px; color:var(--text-muted); margin:4px 0 0;"></p>
         </div>
         <div class="proj-box" id="m-proj-box">
           <p class="p-label" id="m-proj-label">Projeção final do mês</p>
@@ -132,7 +131,7 @@ def render(payload, generated_at=""):
 
   <div id="view-historico">
     <div class="card hist-card">
-      <p class="title">Taxa de no-show ao longo dos meses</p>
+      <p class="title">Taxa de no-show MoM</p>
       <div id="chart-noshow"></div>
       <div class="legend">
         <span><span class="line-swatch" style="background:var(--text-secondary);"></span>No-show total</span>
@@ -144,7 +143,7 @@ def render(payload, generated_at=""):
       <div id="chart-meta"></div>
       <div class="legend">
         <span><span class="dot" style="background:var(--g-dark);"></span>Agendado pela pré-vendas</span>
-        <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>Resto (todos os canais)</span>
+        <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>Sem envolvimento de pré-vendas</span>
       </div>
     </div>
     <div class="card hist-card">
@@ -244,7 +243,7 @@ CSS = '''
   .summary-grid.cols-3 { grid-template-columns:repeat(3,1fr); }
   .card.metric-card { transition:box-shadow 150ms ease; }
   .card.metric-card:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
-  .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; }
+  .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; min-height:32px; display:flex; align-items:flex-end; }
   .metric-card .value { font-size:22px; font-weight:500; margin:0; }
   .metric-card .value.red { color:var(--red); }
   .metric-card .sub { font-size:11px; color:var(--text-muted); margin:6px 0 0; }
@@ -254,10 +253,12 @@ CSS = '''
   .seg-card .title { font-size:13px; color:var(--text-secondary); margin:0 0 10px; font-weight:600; }
   .seg-section-label { font-size:10.5px; font-weight:700; color:var(--text-muted); letter-spacing:0.03em; margin:12px 0 6px; text-transform:uppercase; }
   .seg-section-label:first-of-type { margin-top:0; }
-  .ch-row { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+  .ch-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; min-height:32px; border-radius:8px; padding:2px 6px; margin-left:-6px; margin-right:-6px; transition:background 150ms ease; }
+  .ch-row:hover { background:var(--surface-0); }
   .ch-row .name { font-size:12px; width:120px; flex-shrink:0; }
   .ch-track { flex:1; background:var(--surface-0); border-radius:4px; height:8px; overflow:hidden; display:flex; }
-  .ch-count { font-size:11px; width:150px; text-align:right; color:var(--text-muted); flex-shrink:0; }
+  .ch-count { font-size:11px; width:150px; text-align:right; color:var(--text-muted); flex-shrink:0; line-height:1.45; }
+  .ch-count .seg { white-space:nowrap; }
 
   .week-card .title { font-size:13px; font-weight:600; margin:0 0 10px; }
   .week-empty { color:var(--text-muted); font-size:12.5px; font-style:italic; }
@@ -271,10 +272,12 @@ CSS = '''
   .ns-tag { background:var(--red-bg); color:var(--red); font-size:10px; padding:1px 6px; border-radius:5px; margin-left:6px; }
 
   .people-card .title { font-size:13px; font-weight:600; margin:0 0 10px; }
-  .p-row { display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+  .p-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; min-height:32px; border-radius:8px; padding:2px 6px; margin-left:-6px; margin-right:-6px; transition:background 150ms ease; }
+  .p-row:hover { background:var(--surface-0); }
   .p-row .name { font-size:12.5px; width:70px; flex-shrink:0; font-weight:500; }
   .p-track { flex:1; background:var(--surface-0); border-radius:4px; height:9px; overflow:hidden; display:flex; }
-  .p-count { font-size:11.5px; width:210px; text-align:right; color:var(--text-muted); flex-shrink:0; }
+  .p-count { font-size:11.5px; width:210px; text-align:right; color:var(--text-muted); flex-shrink:0; line-height:1.45; }
+  .p-count .seg { white-space:nowrap; }
   .p-legend { display:flex; gap:16px; margin-top:8px; font-size:11px; color:var(--text-secondary); }
   .p-legend span { display:flex; align-items:center; gap:5px; }
   .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
@@ -284,6 +287,10 @@ CSS = '''
   .legend span { display:flex; align-items:center; gap:5px; }
   .line-swatch { width:14px; height:2px; display:inline-block; }
   svg text { font-family:'Montserrat',sans-serif; }
+  svg circle[data-tip] { transition:r 120ms ease; cursor:default; }
+  svg circle[data-tip]:hover { r:4.5; }
+  svg rect[data-tip] { transition:opacity 120ms ease; cursor:default; }
+  svg rect[data-tip]:hover { opacity:0.78; }
 
   .chart-tip {
     position:fixed; pointer-events:none; z-index:1000;
@@ -316,11 +323,17 @@ function segBar(real, ar, ns){
   </div>`;
 }
 
+function triCountLabel(real, ar, ns, closed){
+  if (closed) {
+    return `<span class="seg">${real}·NS ${ns}</span>`;
+  }
+  return `<span class="seg">${real} real.</span> <span class="seg">| ${ar} a real.</span> <span class="seg">| ${ns} no-show</span>`;
+}
+
 function rowsHtml(list, closed){
   return list.map(([name, real, ar, ns]) => {
     const total = real + ar + ns;
-    const countLabel = closed ? `${total} (${real}·NS ${ns})` : `${total} (${real} real. | ${ar} a real. | ${ns} no-show)`;
-    return `<div class="ch-row"><span class="name">${name}</span>${segBar(real, ar, ns)}<span class="ch-count">${countLabel}</span></div>`;
+    return `<div class="ch-row"><span class="name">${name}</span>${segBar(real, ar, ns)}<span class="ch-count">${total} (${triCountLabel(real, ar, ns, closed)})</span></div>`;
   }).join('');
 }
 
@@ -345,9 +358,6 @@ function renderMonth(key){
   document.getElementById('month-filter').value = key;
   document.getElementById('m-mtdline').textContent = m.mtdLine;
   document.getElementById('m-hero-big').textContent = m.prevendasReal;
-  document.getElementById('m-hero-sub').textContent = m.closed
-    ? `${m.prevendasReal} realizados · ${m.pvNoshow} no-shows`
-    : `${m.prevendasReal} realizados · ${m.pvNoshow} no-shows · +${m.pvArealizar} a realizar`;
 
   const badge = document.getElementById('m-badge');
   const projBox = document.getElementById('m-proj-box');
@@ -369,14 +379,16 @@ function renderMonth(key){
 
   document.getElementById('m-proj-label').textContent = m.closed ? 'Fechamento do mês' : 'Projeção final do mês';
   document.getElementById('m-proj-value').textContent = `${m.prevendasReal + m.pvArealizar} de ${m.meta}`;
-  document.getElementById('m-proj-sub').textContent = m.closed ? '' : `${m.prevendasReal} realizadas + ${m.pvArealizar} a realizar próprios (pré-vendas)`;
+  document.getElementById('m-proj-sub').textContent = m.closed ? '' : `${m.prevendasReal} realizadas + ${m.pvArealizar} a realizar`;
 
   const barPct = Math.min(100, (m.prevendasReal / m.meta) * 100);
   const barFillEl = document.getElementById('m-bar-fill');
   barFillEl.style.width = barPct + '%';
   barFillEl.className = 'bar-fill bar-' + st.css;
+  barFillEl.setAttribute('data-tip', `${m.prevendasReal} realizadas`);
   const barArEl = document.getElementById('m-bar-fill-ar');
   barArEl.className = 'bar-fill-ar bar-' + st.css;
+  barArEl.setAttribute('data-tip', `${m.pvArealizar} a realizar`);
   if (m.closed || !m.pvArealizar) {
     barArEl.style.width = '0%';
   } else {
@@ -443,7 +455,7 @@ function renderMonth(key){
         <div style="width:${ar/maxP*100}%; background:var(--g-mid);"></div>
         <div style="width:${ns/maxP*100}%; background:var(--g-pale);"></div>
       </div>
-      <span class="p-count">${total} (${real} real. | ${ar} a real. | ${ns} no-show)</span>
+      <span class="p-count">${total} (${triCountLabel(real, ar, ns, false)})</span>
     </div>`;
   }).join('');
 }
@@ -530,7 +542,7 @@ function barChartSvg({ months, meta }){
   let svg = `<svg viewBox="0 0 720 200" width="100%">`;
   svg += axisSvg(yTicks(maxVal), v => Math.round(v));
   svg += `<line x1="${CHART_LEFT}" y1="${CHART_BOTTOM}" x2="${CHART_RIGHT}" y2="${CHART_BOTTOM}" stroke="var(--border)"/>`;
-  svg += refLineSvg(yFor(meta), '#a9a89f', `meta ${meta}`);
+  svg += refLineSvg(yFor(meta), '#a9a89f', `meta de agendamentos = ${meta}`);
   months.forEach((m, i) => {
     const pv = m.presalesRealTotal;
     const outros = m.totalReal - pv;

@@ -1,0 +1,34 @@
+{
+  "meta_mensal": 20,
+  "presales_agendador": "Vinicius Almeida",
+  "origem_propria": [
+    "LinkedIn Vini",
+    "LinkedIn Seixas",
+    "LinkedIn Raolho",
+    "Lista Fria",
+    "Landing Page",
+    "CONARH",
+    "Reengaja"
+  ],
+  "origem_externa": [
+    "Indicação Externa",
+    "Flash",
+    "Embaixadores"
+  ],
+  "canal_agendamento": [
+    "LinkedIn",
+    "Ligação",
+    "Email",
+    "WhatsApp",
+    "Associados",
+    "Referral",
+    "Embaixadores"
+  ],
+  "apelidos_pessoas": {
+    "Vinicius Almeida": "Vini",
+    "Lucas Pedroso": "Raolho",
+    "Lucas Seixas": "Seixas",
+    "Igor Ramos": "Igor",
+    "Xande": "Xande"
+  }
+}

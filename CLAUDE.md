@@ -280,5 +280,16 @@ Fonte de verdade de layout: `mockup-v3-painel-prevendas.html` (raiz do projeto) 
 
 - **Sem CRM/API integrada para leitura automática** — input de novas calls continua manual (colado pelo usuário), mas agora em dois formatos aceitos (seção 8) e com mutação incremental (seção 9), não mais reenvio da lista completa.
 - **Com persistência real**: a lista mestra por mês (seção 9) é o dado principal do sistema, não um cache descartável — precisa sobreviver entre sessões do Claude Code.
-- **Um único arquivo de dashboard** (`output/dashboard.html`), não mais um arquivo por mês — a partir da v3, o dropdown de mês (seção 5) e a aba Histórico (seção 10) exigem ter todos os meses disponíveis na mesma página, com troca de mês/aba no client-side (JS), sem regerar/recarregar. O comando `gerar` (seção 9) processa todos os meses salvos em `data/` de uma vez e embute os dados no HTML.
+- **Um único arquivo de dashboard** (`docs/index.html`, seção 13), não mais um arquivo por mês — a partir da v3, o dropdown de mês (seção 5) e a aba Histórico (seção 10) exigem ter todos os meses disponíveis na mesma página, com troca de mês/aba no client-side (JS), sem regerar/recarregar. O comando `gerar` (seção 9) processa todos os meses salvos em `data/` de uma vez e embute os dados no HTML.
 - Plataforma alvo: **Claude Code**, não artifact do claude.ai.
+
+---
+
+## 13. Publicação via GitHub Pages
+
+- **Repositório**: [`wallace-investpass/investpass-pre-sales-pannel`](https://github.com/wallace-investpass/investpass-pre-sales-pannel), público, dedicado (não reaproveita o `investpass-conversion-dashboard`, que é outro projeto — app Python/Heroku pra Conversion Intelligence).
+- **Link do painel (GitHub Pages)**: **https://wallace-investpass.github.io/investpass-pre-sales-pannel/** — esse é o link fixo pra compartilhar com o time e usar no report semanal do Slack.
+- **Decisão de privacidade**: `data/*.json` (lista mestra, com nome de contato/cargo/pipedriveId) está no `.gitignore` — só existe localmente, nunca é commitada. Só o HTML gerado (`docs/index.html`, que já expõe nomes de empresa/métricas agregadas — mesmo trade-off aceito pra o painel em si) vai pro repositório público. Isso evita expor dado além do que o painel já mostra (contato/cargo/ID do Pipedrive não aparecem no dashboard).
+- **Implicação**: como `data/` não é versionada, não há backup automático da lista mestra via git — só existe na máquina local. Vale considerar algum backup separado se isso virar um risco.
+- **Pages**: "Deploy from a branch", branch `main`, pasta `/docs` (sem step de build — o HTML gerado já é o artefato final).
+- **Publicação automática**: `python3 cli.py gerar --push` gera `docs/index.html` e, se houver mudança, faz `git add docs && git commit && git push` sozinho — é o comando usado sempre que uma atualização real (não teste/dev) precisa ir pro ar. `gerar` sem `--push` só atualiza o arquivo local, sem tocar no git (usado pra iteração/teste).

@@ -12,7 +12,7 @@ def _embed_json(value):
     return json.dumps(value, ensure_ascii=False).replace("</", "<\\/")
 
 
-def render(payload):
+def render(payload, generated_at=""):
     months_json = _embed_json(payload["months"])
     hist_order_json = _embed_json(payload["histOrder"])
     default_mes = payload["defaultMes"]
@@ -36,6 +36,15 @@ def render(payload):
 <body>
 <div class="wrap">
 
+  <div class="app-header">
+    <div style="display:flex; align-items:flex-end; gap:10px;">
+      <span style="font-weight:900; font-size:22px; letter-spacing:-0.02em;">investPass</span>
+      <span style="width:1.5px; height:22px; background:var(--text-muted);"></span>
+      <h1 style="display:inline; font-size:22px; font-weight:500; margin:0; line-height:22px;">Painel de Pré-Vendas</h1>
+    </div>
+    <span class="updated">última atualização: {generated_at}</span>
+  </div>
+
   <div class="top-bar">
     <div class="tabs">
       <button class="tab active" data-tab="mensal" onclick="switchTab('mensal')">Detalhe mensal</button>
@@ -48,7 +57,6 @@ def render(payload):
 
   <div id="view-mensal">
     <div class="header-row">
-      <h1 id="m-title"></h1>
       <span class="mtd-line" id="m-mtdline"></span>
     </div>
 
@@ -188,14 +196,16 @@ CSS = '''
   body { margin:0; padding:32px; background:var(--surface-0); font-family:'Montserrat',sans-serif; color:var(--text-primary); }
   .wrap { max-width:1080px; margin:0 auto; }
 
+  .app-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:8px; }
+  .app-header .updated { font-size:12px; color:var(--text-muted); }
+
   .top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
   .tabs { display:flex; gap:4px; border-bottom:0.5px solid var(--border); }
   .tab { padding:8px 4px; margin-right:20px; font-size:13.5px; font-weight:500; color:var(--text-muted); border-bottom:2px solid transparent; cursor:pointer; background:none; border-top:none; border-left:none; border-right:none; font-family:'Montserrat',sans-serif; }
   .tab.active { color:var(--text-primary); border-bottom:2px solid var(--text-primary); }
   select#month-filter { height:32px; border-radius:8px; border:0.5px solid var(--border); background:var(--surface-1); padding:0 10px; font-size:13px; font-family:'Montserrat',sans-serif; }
 
-  .header-row { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:6px; }
-  .header-row h1 { font-size:20px; font-weight:500; margin:0; }
+  .header-row { display:flex; align-items:baseline; justify-content:flex-end; margin-bottom:16px; flex-wrap:wrap; gap:6px; }
   .header-row .mtd-line { font-size:12px; color:var(--text-muted); }
 
   .card { background:var(--surface-1); border:0.5px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:14px; }
@@ -333,7 +343,6 @@ function callsTable(rows, withNoShow){
 function renderMonth(key){
   const m = MONTHS[key];
   document.getElementById('month-filter').value = key;
-  document.getElementById('m-title').textContent = `Agendamentos — ${m.label}`;
   document.getElementById('m-mtdline').textContent = m.mtdLine;
   document.getElementById('m-hero-big').textContent = m.prevendasReal;
   document.getElementById('m-hero-sub').textContent = m.closed

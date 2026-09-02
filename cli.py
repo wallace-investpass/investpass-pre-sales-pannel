@@ -136,7 +136,8 @@ def cmd_gerar(args):
     if args.mes and args.mes in payload["months"]:
         payload["defaultMes"] = args.mes
 
-    html_out = dashboard_mod.render(payload)
+    generated_at = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+    html_out = dashboard_mod.render(payload, generated_at=generated_at)
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
     out_path = DOCS_DIR / "index.html"
     out_path.write_text(html_out, encoding="utf-8")

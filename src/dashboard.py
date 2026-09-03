@@ -388,13 +388,16 @@ function businessDays(d1, d2, feriadosSet){
   return n;
 }
 
-function mtdCutoffDate(hoje){
-  // Última sexta-feira até hoje, ou o próprio dia se hoje for sexta (seção 4).
-  const wdMon0 = (hoje.getDay() + 6) % 7; // segunda=0 ... domingo=6
-  const diasDesdeSexta = (wdMon0 - 4 + 7) % 7;
-  const cutoff = new Date(hoje);
-  cutoff.setDate(cutoff.getDate() - diasDesdeSexta);
-  return cutoff;
+function mtdCutoffDate(hoje, feriadosSet){
+  // Último dia útil completo anterior a hoje — pula fins de semana e
+  // feriados, retrocedendo até achar um dia útil real. Nunca é o próprio
+  // hoje, mesmo que hoje seja dia útil (seção 4).
+  const d = new Date(hoje);
+  d.setDate(d.getDate() - 1);
+  while (d.getDay() === 0 || d.getDay() === 6 || feriadosSet.has(isoOf(d))) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d;
 }
 
 function monthBounds(mesKey){
@@ -404,22 +407,16 @@ function monthBounds(mesKey){
   return [inicio, fim];
 }
 
-function clampDate(d, lo, hi){
-  if (d < lo) return lo;
-  if (d > hi) return hi;
-  return d;
-}
-
 function computeMtd(mesKey, hoje, feriadosSet){
   const [inicio, fim] = monthBounds(mesKey);
-  const cutoff = mtdCutoffDate(hoje);
-  const cutoffNoMes = clampDate(cutoff, inicio, fim);
-  const ontem = new Date(hoje);
-  ontem.setDate(ontem.getDate() - 1);
+  const cutoff = mtdCutoffDate(hoje, feriadosSet);
   const diasUteisTotal = businessDays(inicio, fim, feriadosSet);
-  const diasUteisDecorridos = businessDays(inicio, cutoffNoMes < ontem ? cutoffNoMes : ontem, feriadosSet);
+  // Se o cutoff cair no mês anterior (início do mês, nenhum dia útil
+  // completo decorrido ainda), decorridos é 0 — não força a data do
+  // cutoff pro início do mês (isso contaria um dia fantasma).
+  const diasUteisDecorridos = cutoff < inicio ? 0 : businessDays(inicio, cutoff < fim ? cutoff : fim, feriadosSet);
   return {
-    cutoff: cutoffNoMes,
+    cutoff,
     diasUteisTotal,
     diasUteisDecorridos,
     pctMtd: diasUteisTotal ? diasUteisDecorridos / diasUteisTotal : 0,

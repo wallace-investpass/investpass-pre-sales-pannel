@@ -145,7 +145,7 @@ O dropdown de mês é um **widget customizado** (botão + lista posicionada com 
 **Linha de status do mês** (abaixo do dropdown, acima do hero): se o mês está fechado, texto "Mês encerrado"; se está aberto, `MTD DD/MM · X de Y dias úteis (até DD/MM)`. **Nunca menciona feriados na UI** — feriados continuam usados internamente pra calcular dias úteis (seção 4), mas isso é lógica de cálculo, não aparece escrito em lugar nenhum.
 
 **Hero**:
-- Rótulo fixo: "Agendamentos realizados com envolvimento de pré-vendas" (sem menção a canal próprio ou meta no título — isso já aparece no badge/barra/card de projeção).
+- Rótulo: "Agendamentos realizados com envolvimento de pré-vendas · Meta = {meta} agendamentos".
 - Valor: agendado pela pré-vendas (qualquer origem), realizados e não no-show (seção 4).
 - Sem sub-linha abaixo do número/badge — essa informação (realizados/no-shows/a realizar) já está coberta pelos 4 cards abaixo e pelo hover da barra (ver abaixo).
 - Badge ao lado do número:
@@ -174,7 +174,7 @@ Layout interno dos 4 cards: título sempre ancorado no topo (altura reservada fi
 
 **Tabela de calls** — substitui o antigo formato de lista por dia. Mesmo componente nos dois casos:
 - Mês fechado: título "Todas as calls de {mês}", todas as calls do mês.
-- Mês aberto: título "Pipeline do mês ({Mês}/{Ano}) · N calls", todas as calls "a realizar" **do mês inteiro** selecionado (não mais só a semana corrente).
+- Mês aberto: título "Pipeline restante do mês ({Mês}/{Ano}) · N calls a realizar", todas as calls "a realizar" **do mês inteiro** selecionado (não mais só a semana corrente).
 - Colunas: Data, Empresa, Origem, Canal, Agendada por (apelido, seção 3), e uma tag "NO-SHOW" quando aplicável.
 - Campo ausente (data, origem ou canal) numa call específica vira só "—" na célula correspondente, sem texto de aviso — diferente da regra acima (que é o card/breakdown inteiro faltando quando a dimensão inteira do mês não tem dado); aqui é célula a célula, mesmo num mês onde a dimensão está disponível para outras calls.
 - Container com scroll (`max-height`, header fixo) — nunca despejar todas as linhas sem scroll.

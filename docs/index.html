@@ -47,7 +47,7 @@
   .hero-top { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
   .hero-label { font-size:11.5px; font-weight:600; color:var(--text-secondary); letter-spacing:0.02em; text-transform:uppercase; margin:0 0 6px; }
   .hero-number { display:flex; align-items:baseline; gap:10px; }
-  .hero-number .big { font-size:42px; font-weight:600; line-height:1; }
+  .hero-number .big { font-size:60px; font-weight:600; line-height:1; }
   .badge { padding:5px 12px; border-radius:8px; font-size:12.5px; font-weight:600; white-space:nowrap; }
   .badge-green { background:var(--green-bg); color:var(--green-text); }
   .badge-amber { background:var(--amber-bg); color:var(--amber); }
@@ -56,7 +56,8 @@
   .proj-box .p-label { font-size:11px; color:var(--text-muted); margin:0 0 3px; }
   .proj-box .p-value { font-size:18px; font-weight:600; margin:0; color:var(--text-primary); }
   .proj-box .p-sub { font-size:11px; color:var(--text-muted); margin:3px 0 0; }
-  .proj-box .p-remaining { font-size:11px; color:var(--text-primary); margin:8px 0 0; padding-top:8px; border-top:0.5px solid var(--border); display:flex; align-items:center; gap:6px; }
+  .proj-box .p-remaining { font-size:11px; color:var(--text-primary); margin:8px 0 0; padding-top:8px; border-top:0.5px solid var(--border); }
+  .proj-box .p-remaining:not([hidden]) { display:flex; align-items:center; gap:6px; }
   .proj-box .p-remaining b { font-weight:700; }
   .bar-outer { position:relative; height:14px; border-radius:7px; background:var(--surface-0); margin-top:40px; transition:box-shadow 150ms ease; }
   .bar-outer:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
@@ -77,7 +78,7 @@
   .card.metric-card:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
   .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; min-height:48px; }
   .metric-card .value-row { flex:1; display:flex; align-items:center; }
-  .metric-card .value { font-size:22px; font-weight:500; margin:0; }
+  .metric-card .value { font-size:30px; font-weight:500; margin:0; }
   .metric-card .value.red { color:var(--red); }
   .metric-card .sub { font-size:11px; color:var(--text-muted); margin:6px 0 0; }
   .twin { flex:1; display:flex; justify-content:space-between; align-items:center; gap:18px; }
@@ -154,7 +155,7 @@
       <span style="width:1.5px; height:22px; background:var(--text-muted);"></span>
       <h1 style="display:inline; font-size:22px; font-weight:500; margin:0; line-height:22px;">Painel de Pré-Vendas</h1>
     </div>
-    <span class="updated">última atualização: 03/09/2026 09:36</span>
+    <span class="updated">última atualização: 03/09/2026 12:13</span>
   </div>
 
   <div class="top-bar">
@@ -181,7 +182,7 @@
     <div class="card">
       <div class="hero-top">
         <div>
-          <p class="hero-label">Agendamentos realizados com envolvimento de pré-vendas</p>
+          <p class="hero-label" id="m-hero-label"></p>
           <div class="hero-number">
             <span class="big" id="m-hero-big"></span>
             <span class="badge" id="m-badge"></span>
@@ -474,7 +475,7 @@ function computeMonthView(mesKey, raw, hojeIso, feriadosSet){
     const mesARealizar = [...totalARealizar].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
     const tituloMes = raw.label.replace(' ', '/');
     view.week = {
-      title: `Pipeline do mês (${tituloMes}) · ${mesARealizar.length} calls`,
+      title: `Pipeline restante do mês (${tituloMes}) · ${mesARealizar.length} calls a realizar`,
       calls: mesARealizar.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, c.data === hojeIso]),
     };
   }
@@ -585,6 +586,7 @@ function renderMonth(key){
   document.getElementById('month-dropdown-label').textContent = m.label;
   document.querySelectorAll('.month-dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.mes === key));
   document.getElementById('m-mtdline').textContent = m.mtdLine;
+  document.getElementById('m-hero-label').textContent = `Agendamentos realizados com envolvimento de pré-vendas · Meta = ${m.meta} agendamentos`;
   document.getElementById('m-hero-big').textContent = m.prevendasReal;
 
   const badge = document.getElementById('m-badge');
@@ -610,6 +612,7 @@ function renderMonth(key){
   const remainingEl = document.getElementById('m-proj-remaining');
   if (m.closed) {
     remainingEl.hidden = true;
+    remainingEl.innerHTML = '';
   } else {
     const faltam = m.meta - (m.prevendasReal + m.pvArealizar);
     remainingEl.innerHTML = faltam > 0

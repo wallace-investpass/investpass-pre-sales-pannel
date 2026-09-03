@@ -109,6 +109,7 @@
   table.calls-table td { padding:7px 10px; border-bottom:0.5px solid var(--border); }
   table.calls-table tbody tr:last-child td { border-bottom:none; }
   .ns-tag { background:var(--red-bg); color:var(--red); font-size:10px; padding:1px 6px; border-radius:5px; margin-left:6px; }
+  .today-tag { background:var(--surface-0); color:var(--text-secondary); border:0.5px solid var(--border); font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; padding:1px 6px; border-radius:5px; margin-left:6px; }
 
   .people-card .title { font-size:13px; font-weight:600; margin:0 0 10px; }
   .p-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; min-height:32px; border-radius:8px; padding:2px 6px; margin-left:-6px; margin-right:-6px; transition:background 150ms ease; }
@@ -157,7 +158,7 @@
       <span style="width:1.5px; height:22px; background:var(--text-muted);"></span>
       <h1 style="display:inline; font-size:22px; font-weight:500; margin:0; line-height:22px;">Painel de Pré-Vendas</h1>
     </div>
-    <span class="updated">última atualização: 03/09/2026 08:51</span>
+    <span class="updated">última atualização: 03/09/2026 09:00</span>
   </div>
 
   <div class="top-bar">
@@ -479,7 +480,7 @@ function computeMonthView(mesKey, raw, hojeIso, feriadosSet){
     const tituloMes = raw.label.replace(' ', '/');
     view.week = {
       title: `Pipeline do mês (${tituloMes}) · ${mesARealizar.length} calls`,
-      calls: mesARealizar.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor]),
+      calls: mesARealizar.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, c.data === hojeIso]),
     };
   }
 
@@ -550,12 +551,14 @@ function rowsHtml(list, closed){
   }).join('');
 }
 
-function callsTable(rows, withNoShow){
+function callsTable(rows, mode){
   const body = rows.map(r => {
-    const [d, empresa, origem, canal, pessoa, ns] = r;
+    const [d, empresa, origem, canal, pessoa, flag] = r;
+    const dateCell = mode === 'pipeline' && flag ? `${d} <span class="today-tag">HOJE</span>` : d;
+    const tagCell = mode === 'closed' && flag ? '<span class="ns-tag">NO-SHOW</span>' : '';
     return `<tr>
-      <td>${d}</td><td>${empresa}</td><td>${origem}</td><td>${canal}</td><td>${pessoa}</td>
-      <td>${ns ? '<span class="ns-tag">NO-SHOW</span>' : ''}</td>
+      <td>${dateCell}</td><td>${empresa}</td><td>${origem}</td><td>${canal}</td><td>${pessoa}</td>
+      <td>${tagCell}</td>
     </tr>`;
   }).join('');
   return `<div class="calls-table-scroll">
@@ -678,10 +681,10 @@ function renderMonth(key){
 
   if (m.closed) {
     document.getElementById('m-week-title').textContent = `Todas as calls de ${m.label}`;
-    document.getElementById('m-week-body').innerHTML = callsTable(m.allCalls, true);
+    document.getElementById('m-week-body').innerHTML = callsTable(m.allCalls, 'closed');
   } else {
     document.getElementById('m-week-title').textContent = m.week.title;
-    document.getElementById('m-week-body').innerHTML = callsTable(m.week.calls, false);
+    document.getElementById('m-week-body').innerHTML = callsTable(m.week.calls, 'pipeline');
   }
 
   const maxP = Math.max(...m.pessoa.map(p => p[1] + p[2] + p[3]), 1);

@@ -103,7 +103,7 @@ Associados (renomeada de "Indicação Externa" em 2026-09 — mesmo canal, nome 
 **Canal de agendamento (como a call foi marcada — dimensão separada de "origem"):**
 LinkedIn · Ligação · Email · WhatsApp · Associados · Referral · Embaixadores
 
-**Apelidos de pessoas** (usados só na seção "Por pessoa" e na coluna "Agendada por" da tabela de calls — seção 5; em todo o resto do sistema, o nome completo continua sendo a fonte de verdade):
+**Apelidos de pessoas** (usados só na seção "Agendamentos por pessoa" e na coluna "Agendada por" da tabela de calls — seção 5; em todo o resto do sistema, o nome completo continua sendo a fonte de verdade):
 
 | Nome completo | Apelido de exibição |
 |---|---|
@@ -172,15 +172,16 @@ Layout interno dos 4 cards: título sempre ancorado no topo (altura reservada fi
 - Legenda de cores (realizadas · a realizar · no-show) fixa no rodapé de **cada um** dos dois cards (ancorada embaixo via flexbox — não flutua logo depois da última linha da lista, fica sempre na mesma altura entre os dois cards mesmo quando um tem mais linhas que o outro).
 - **Mês com dado histórico incompleto** (ex: meses importados de antes de a origem/canal serem registrados por call — ver nota de proveniência na seção 9): se **nenhuma** call do mês tem origem preenchida, o card "🌱 Origem do lead" inteiro mostra só o texto "dado indisponível" no lugar do breakdown, e a legenda de cores daquele card some junto (o outro card, Canal, segue a mesma regra de forma independente — um pode estar disponível e o outro não no mesmo mês). Isso é diferente de "canal com 0 registros" (que já não aparece, regra acima) — aqui é a dimensão inteira que não tem dado em nenhuma linha do mês.
 
-**Tabela de calls** — substitui o antigo formato de lista por dia. Mesmo componente nos dois casos:
-- Mês fechado: título "Todas as calls de {mês}", todas as calls do mês.
-- Mês aberto: título "Pipeline restante do mês ({Mês}/{Ano}) · N calls a realizar", todas as calls "a realizar" **do mês inteiro** selecionado (não mais só a semana corrente).
-- Colunas: Data, Empresa, Origem, Canal, Agendada por (apelido, seção 3), e uma tag "NO-SHOW" quando aplicável.
+**👤 Agendamentos por pessoa** (vem logo após Origem/Canal — as tabelas de calls abaixo são o último elemento da página): barra com os mesmos 3 tons sóbrios de verde (realizadas · a realizar · no-show), nomes de exibição = apelidos (seção 3). Contagem segue a mesma regra do breakdown (3 segmentos sempre no mês aberto, 2 no mês fechado — condição pelo estado do mês, não por valor zerado). Hover de fundo sutil na linha, igual ao breakdown. Legenda de cores fixa abaixo do bloco.
+
+**Tabela(s) de calls** — substitui o antigo formato de lista por dia. Mesmo componente de tabela nos casos abaixo (colunas: Data, Empresa, Origem, Canal, Agendada por (apelido, seção 3), e uma tag "NO-SHOW" quando aplicável):
+- Mês fechado: **uma única tabela**, título "Todas as calls de {mês}", todas as calls do mês.
+- Mês aberto: **duas tabelas**, nessa ordem:
+  1. "Pipeline restante do mês ({Mês}/{Ano}) · N calls a realizar" — todas as calls "a realizar" **do mês inteiro** selecionado (não mais só a semana corrente).
+  2. "Calls já realizadas no mês ({Mês}/{Ano}) · N calls realizadas (ou que deveriam ter sido)" — só as calls já realizadas até agora nesse mês, no-shows incluídos (com a tag). Existe só no mês aberto — no mês fechado a tabela única acima já cobre tudo, não duplicar.
 - Campo ausente (data, origem ou canal) numa call específica vira só "—" na célula correspondente, sem texto de aviso — diferente da regra acima (que é o card/breakdown inteiro faltando quando a dimensão inteira do mês não tem dado); aqui é célula a célula, mesmo num mês onde a dimensão está disponível para outras calls.
 - Container com scroll (`max-height`, header fixo) — nunca despejar todas as linhas sem scroll.
-- **Sem hover nas linhas** — diferente do breakdown e do "Por pessoa" abaixo.
-
-**Por pessoa**: barra com os mesmos 3 tons sóbrios de verde (realizadas · a realizar · no-show), nomes de exibição = apelidos (seção 3). Contagem segue a mesma regra do breakdown (3 segmentos sempre no mês aberto, 2 no mês fechado — condição pelo estado do mês, não por valor zerado). Hover de fundo sutil na linha, igual ao breakdown. Legenda de cores fixa abaixo do bloco.
+- **Sem hover nas linhas** — diferente do breakdown e do "Agendamentos por pessoa" acima.
 
 ---
 

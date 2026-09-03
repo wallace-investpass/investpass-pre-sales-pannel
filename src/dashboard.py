@@ -81,6 +81,7 @@ def render(payload, generated_at=""):
           <p class="p-label" id="m-proj-label">Projeção final do mês</p>
           <p class="p-value" id="m-proj-value"></p>
           <p class="p-sub" id="m-proj-sub"></p>
+          <p class="p-remaining" id="m-proj-remaining" hidden></p>
         </div>
       </div>
       <div class="bar-outer">
@@ -248,16 +249,11 @@ CSS = '''
   .badge-green { background:var(--green-bg); color:var(--green-text); }
   .badge-amber { background:var(--amber-bg); color:var(--amber); }
   .badge-red { background:var(--red-bg); color:var(--red); }
-  .proj-box { background:var(--surface-0); border-radius:10px; padding:10px 14px; min-width:170px; border:0.5px solid transparent; }
+  .proj-box { background:var(--surface-0); border-radius:10px; padding:10px 14px; min-width:170px; border:0.5px solid var(--border); }
   .proj-box .p-label { font-size:11px; color:var(--text-muted); margin:0 0 3px; }
-  .proj-box .p-value { font-size:18px; font-weight:600; margin:0; }
+  .proj-box .p-value { font-size:18px; font-weight:600; margin:0; color:var(--text-primary); }
   .proj-box .p-sub { font-size:11px; color:var(--text-muted); margin:3px 0 0; }
-  .proj-box.proj-green { background:var(--green-bg); border-color:#bfe6cb; }
-  .proj-box.proj-green .p-value { color:var(--green-text); }
-  .proj-box.proj-amber { background:var(--amber-bg); border-color:#eecf9c; }
-  .proj-box.proj-amber .p-value { color:var(--amber); }
-  .proj-box.proj-red { background:var(--red-bg); border-color:#eeb8b0; }
-  .proj-box.proj-red .p-value { color:var(--red); }
+  .proj-box .p-remaining { font-size:11px; color:var(--text-primary); margin:8px 0 0; padding-top:8px; border-top:0.5px solid var(--border); }
   .bar-outer { position:relative; height:14px; border-radius:7px; background:var(--surface-0); margin-top:40px; transition:box-shadow 150ms ease; }
   .bar-outer:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
   .bar-fill { position:absolute; left:0; top:0; height:100%; border-radius:7px 0 0 7px; }
@@ -305,7 +301,7 @@ CSS = '''
   table.calls-table td { padding:7px 10px; border-bottom:0.5px solid var(--border); }
   table.calls-table tbody tr:last-child td { border-bottom:none; }
   .ns-tag { background:var(--red-bg); color:var(--red); font-size:10px; padding:1px 6px; border-radius:5px; margin-left:6px; }
-  .today-tag { background:var(--surface-0); color:var(--text-secondary); border:0.5px solid var(--border); font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; padding:1px 6px; border-radius:5px; margin-left:6px; }
+  .today-tag { background:#fdead9; color:#c1620a; font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; padding:1px 6px; border-radius:5px; margin-left:6px; }
 
   .people-card .title { font-size:13px; font-weight:600; margin:0 0 10px; }
   .p-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; min-height:32px; border-radius:8px; padding:2px 6px; margin-left:-6px; margin-right:-6px; transition:background 150ms ease; }
@@ -509,6 +505,7 @@ function computeMonthView(mesKey, raw, hojeIso, feriadosSet){
     const cutoffLabel = ddmm(isoOf(mtd.cutoff));
     view.mtdLine = `MTD ${cutoffLabel} · ${mtd.diasUteisDecorridos} de ${mtd.diasUteisTotal} dias úteis (até ${cutoffLabel})`;
     view.expected = mtd.pctMtd * meta;
+    view.diasUteisRestantes = mtd.diasUteisTotal - mtd.diasUteisDecorridos;
 
     const mesARealizar = [...totalARealizar].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
     const tituloMes = raw.label.replace(' ', '/');
@@ -627,7 +624,6 @@ function renderMonth(key){
   document.getElementById('m-hero-big').textContent = m.prevendasReal;
 
   const badge = document.getElementById('m-badge');
-  const projBox = document.getElementById('m-proj-box');
   let st, expectedForMarker;
   if (m.closed) {
     const pct = Math.round((m.prevendasReal / m.meta) * 100);
@@ -642,11 +638,21 @@ function renderMonth(key){
     badge.textContent = `${st.label} ${pct}% do MTD (${Math.round(expected)} agendamentos)`;
   }
   badge.className = 'badge badge-' + st.css;
-  projBox.className = 'proj-box proj-' + st.css;
 
   document.getElementById('m-proj-label').textContent = m.closed ? 'Fechamento do mês' : 'Projeção final do mês';
   document.getElementById('m-proj-value').textContent = `${m.prevendasReal + m.pvArealizar} de ${m.meta}`;
   document.getElementById('m-proj-sub').textContent = m.closed ? '' : `${m.prevendasReal} realizadas + ${m.pvArealizar} a realizar`;
+
+  const remainingEl = document.getElementById('m-proj-remaining');
+  if (m.closed) {
+    remainingEl.hidden = true;
+  } else {
+    const faltam = m.meta - (m.prevendasReal + m.pvArealizar);
+    remainingEl.textContent = faltam > 0
+      ? `Faltam ${faltam} call${faltam === 1 ? '' : 's'} · restam ${m.diasUteisRestantes} dia${m.diasUteisRestantes === 1 ? '' : 's'} úteis`
+      : 'Meta coberta pelo agendado';
+    remainingEl.hidden = false;
+  }
 
   const barPct = Math.min(100, (m.prevendasReal / m.meta) * 100);
   const barFillEl = document.getElementById('m-bar-fill');

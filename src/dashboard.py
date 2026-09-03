@@ -83,7 +83,7 @@ def render(payload, generated_at=""):
     </div>
 
     <div class="summary-grid" id="m-summary-grid">
-      <div class="card metric-card" id="m-card-ar-wrap"><p class="label">À realizar no mês</p><p class="value" id="m-card-ar"></p><p class="sub" id="m-card-ar-sub"></p></div>
+      <div class="card metric-card" id="m-card-ar-wrap"><p class="label">Agendamentos à realizar no mês</p><p class="value" id="m-card-ar"></p><p class="sub" id="m-card-ar-sub"></p></div>
       <div class="card metric-card">
         <p class="label">No-show (meta 10%)</p>
         <div class="twin">
@@ -91,7 +91,7 @@ def render(payload, generated_at=""):
           <div><p class="value" id="m-ns-pv"></p><p class="sub">pré-vendas</p></div>
         </div>
       </div>
-      <div class="card metric-card"><p class="label">Canais próprios</p><p class="value" id="m-card-propria"></p><p class="sub" id="m-card-propria-sub"></p></div>
+      <div class="card metric-card"><p class="label">Total de agendamentos (canais próprios)</p><p class="value" id="m-card-propria"></p><p class="sub" id="m-card-propria-sub"></p></div>
       <div class="card metric-card"><p class="label">Total de agendamentos (canais próprios + externos)</p><p class="value" id="m-card-total"></p><p class="sub" id="m-card-total-sub"></p></div>
     </div>
 
@@ -136,6 +136,7 @@ def render(payload, generated_at=""):
       <div class="legend">
         <span><span class="line-swatch" style="background:var(--text-secondary);"></span>No-show total</span>
         <span><span class="line-swatch" style="background:var(--g-dark);"></span>No-show pré-vendas</span>
+        <span><span class="line-swatch dashed" style="border-top-color:#c9a29c;"></span>meta de no-show: 10%</span>
       </div>
     </div>
     <div class="card hist-card">
@@ -144,6 +145,7 @@ def render(payload, generated_at=""):
       <div class="legend">
         <span><span class="dot" style="background:var(--g-dark);"></span>Agendado pela pré-vendas</span>
         <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>Sem envolvimento de pré-vendas</span>
+        <span><span class="line-swatch dashed" style="border-top-color:#a9a89f;"></span><span id="chart-meta-goal-legend"></span></span>
       </div>
     </div>
     <div class="card hist-card">
@@ -243,14 +245,16 @@ CSS = '''
   .summary-grid.cols-3 { grid-template-columns:repeat(3,1fr); }
   .card.metric-card { transition:box-shadow 150ms ease; }
   .card.metric-card:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
-  .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; min-height:32px; display:flex; align-items:flex-end; }
+  .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; min-height:48px; display:flex; align-items:flex-end; }
   .metric-card .value { font-size:22px; font-weight:500; margin:0; }
   .metric-card .value.red { color:var(--red); }
   .metric-card .sub { font-size:11px; color:var(--text-muted); margin:6px 0 0; }
   .twin { display:flex; gap:18px; }
 
   .seg-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+  .seg-card { display:flex; flex-direction:column; }
   .seg-card .title { font-size:13px; color:var(--text-secondary); margin:0 0 10px; font-weight:600; }
+  .seg-card .p-legend { margin-top:auto; padding-top:12px; }
   .seg-section-label { font-size:10.5px; font-weight:700; color:var(--text-muted); letter-spacing:0.03em; margin:12px 0 6px; text-transform:uppercase; }
   .seg-section-label:first-of-type { margin-top:0; }
   .ch-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; min-height:32px; border-radius:8px; padding:2px 6px; margin-left:-6px; margin-right:-6px; transition:background 150ms ease; }
@@ -286,6 +290,7 @@ CSS = '''
   .legend { display:flex; gap:16px; margin-top:8px; font-size:11px; color:var(--text-secondary); flex-wrap:wrap; }
   .legend span { display:flex; align-items:center; gap:5px; }
   .line-swatch { width:14px; height:2px; display:inline-block; }
+  .line-swatch.dashed { width:14px; height:0; background:none; border-top:2px dashed; }
   svg text { font-family:'Montserrat',sans-serif; }
   svg circle[data-tip] { transition:r 120ms ease; cursor:default; }
   svg circle[data-tip]:hover { r:4.5; }
@@ -323,17 +328,24 @@ function segBar(real, ar, ns){
   </div>`;
 }
 
-function triCountLabel(real, ar, ns, closed){
-  if (closed) {
-    return `<span class="seg">${real}·NS ${ns}</span>`;
-  }
-  return `<span class="seg">${real} real.</span> <span class="seg">| ${ar} a real.</span> <span class="seg">| ${ns} no-show</span>`;
+function realizadosSubtext(real, ns, ar){
+  let s = `${real} realizados · ${ns} no-shows`;
+  if (ar > 0) s += ` · +${ar} a realizar`;
+  return s;
 }
 
-function rowsHtml(list, closed){
+function triCountLabel(real, ar, ns){
+  const parts = [];
+  if (real > 0) parts.push(`${real} real.`);
+  if (ar > 0) parts.push(`${ar} a real.`);
+  if (ns > 0) parts.push(`${ns} no-show`);
+  return parts.map((p, i) => `<span class="seg">${i > 0 ? '| ' : ''}${p}</span>`).join(' ');
+}
+
+function rowsHtml(list){
   return list.map(([name, real, ar, ns]) => {
     const total = real + ar + ns;
-    return `<div class="ch-row"><span class="name">${name}</span>${segBar(real, ar, ns)}<span class="ch-count">${total} (${triCountLabel(real, ar, ns, closed)})</span></div>`;
+    return `<div class="ch-row"><span class="name">${name}</span>${segBar(real, ar, ns)}<span class="ch-count">${total} (${triCountLabel(real, ar, ns)})</span></div>`;
   }).join('');
 }
 
@@ -405,8 +417,12 @@ function renderMonth(key){
     document.getElementById('m-bar-marker-label').textContent = `MTD - ${Math.round(expectedForMarker)}`;
   }
 
+  const propriaAr = m.origem["CANAIS PRÓPRIOS"].reduce((s, r) => s + r[2], 0);
+  const propriaNs = m.origem["CANAIS PRÓPRIOS"].reduce((s, r) => s + r[3], 0);
+  const externaAr = m.origem["CANAIS EXTERNOS"].reduce((s, r) => s + r[2], 0);
+
   document.getElementById('m-card-propria').textContent = m.prevendasReal + m.outrosPropria;
-  document.getElementById('m-card-propria-sub').textContent = `${m.prevendasReal} pela pré-vendas · ${m.outrosPropria} outros vendedores`;
+  document.getElementById('m-card-propria-sub').textContent = realizadosSubtext(m.prevendasReal + m.outrosPropria, propriaNs, propriaAr);
 
   const grid = document.getElementById('m-summary-grid');
   const arWrap = document.getElementById('m-card-ar-wrap');
@@ -416,8 +432,6 @@ function renderMonth(key){
   } else {
     arWrap.style.display = '';
     grid.classList.remove('cols-3');
-    const propriaAr = m.origem["CANAIS PRÓPRIOS"].reduce((s, r) => s + r[2], 0);
-    const externaAr = m.origem["CANAIS EXTERNOS"].reduce((s, r) => s + r[2], 0);
     document.getElementById('m-card-ar').textContent = propriaAr + externaAr;
     document.getElementById('m-card-ar-sub').textContent = `${propriaAr} canais próprios · ${externaAr} externos`;
   }
@@ -428,14 +442,14 @@ function renderMonth(key){
   document.getElementById('m-ns-pv').className = 'value' + (m.ns.pv > 10 ? ' red' : '');
 
   document.getElementById('m-card-total').textContent = m.totalReal + m.totalNs + m.totalAr;
-  document.getElementById('m-card-total-sub').textContent = `${m.totalReal} realizados · ${m.totalNs} no-shows · +${m.totalAr} a realizar`;
+  document.getElementById('m-card-total-sub').textContent = realizadosSubtext(m.totalReal, m.totalNs, m.totalAr);
 
   let origemHtml = '';
   Object.keys(m.origem).forEach(section => {
-    origemHtml += `<p class="seg-section-label">${section}</p>${rowsHtml(m.origem[section], m.closed)}`;
+    origemHtml += `<p class="seg-section-label">${section}</p>${rowsHtml(m.origem[section])}`;
   });
   document.getElementById('m-origem').innerHTML = origemHtml;
-  document.getElementById('m-canal').innerHTML = rowsHtml(m.canal, m.closed);
+  document.getElementById('m-canal').innerHTML = rowsHtml(m.canal);
 
   if (m.closed) {
     document.getElementById('m-week-title').textContent = `Todas as calls de ${m.label}`;
@@ -455,7 +469,7 @@ function renderMonth(key){
         <div style="width:${ar/maxP*100}%; background:var(--g-mid);"></div>
         <div style="width:${ns/maxP*100}%; background:var(--g-pale);"></div>
       </div>
-      <span class="p-count">${total} (${triCountLabel(real, ar, ns, false)})</span>
+      <span class="p-count">${total} (${triCountLabel(real, ar, ns)})</span>
     </div>`;
   }).join('');
 }
@@ -502,11 +516,8 @@ function axisSvg(ticks, fmt){
   `).join('');
 }
 
-function refLineSvg(y, color, label){
-  return `
-    <line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="${color}" stroke-dasharray="4,4" stroke-width="1" opacity="0.7"/>
-    <text x="${CHART_LEFT+4}" y="${y-4}" font-size="9" fill="${color}">${label}</text>
-  `;
+function refLineSvg(y, color){
+  return `<line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="${color}" stroke-dasharray="4,4" stroke-width="1" opacity="0.7"/>`;
 }
 
 function lineChartSvg({ months, series, maxVal, fmtVal, refLine }){
@@ -515,7 +526,7 @@ function lineChartSvg({ months, series, maxVal, fmtVal, refLine }){
   let svg = `<svg viewBox="0 0 720 200" width="100%">`;
   svg += axisSvg(yTicks(maxVal), fmtVal);
   svg += `<line x1="${CHART_LEFT}" y1="${CHART_BOTTOM}" x2="${CHART_RIGHT}" y2="${CHART_BOTTOM}" stroke="var(--border)"/>`;
-  if (refLine) svg += refLineSvg(yFor(refLine.value), refLine.color, refLine.label);
+  if (refLine) svg += refLineSvg(yFor(refLine.value), refLine.color);
   series.forEach(s => {
     const pts = months.map((m,i) => `${xs[i]},${yFor(s.getValue(m))}`).join(' ');
     svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="1.5"/>`;
@@ -542,15 +553,15 @@ function barChartSvg({ months, meta }){
   let svg = `<svg viewBox="0 0 720 200" width="100%">`;
   svg += axisSvg(yTicks(maxVal), v => Math.round(v));
   svg += `<line x1="${CHART_LEFT}" y1="${CHART_BOTTOM}" x2="${CHART_RIGHT}" y2="${CHART_BOTTOM}" stroke="var(--border)"/>`;
-  svg += refLineSvg(yFor(meta), '#a9a89f', `meta de agendamentos = ${meta}`);
+  svg += refLineSvg(yFor(meta), '#a9a89f');
   months.forEach((m, i) => {
     const pv = m.presalesRealTotal;
     const outros = m.totalReal - pv;
     const x = xs[i] - barW/2;
     const hPv = CHART_BOTTOM - yFor(pv);
     const hOut = (CHART_BOTTOM - yFor(pv + outros)) - hPv;
-    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv}" width="${barW}" height="${hPv}" fill="var(--g-dark)" data-tip="${monthTick(m)} · pré-vendas: ${pv}"/>`;
-    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv-hOut}" width="${barW}" height="${hOut}" fill="var(--g-pale)" data-tip="${monthTick(m)} · resto: ${outros}"/>`;
+    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv}" width="${barW}" height="${hPv}" fill="var(--g-dark)" data-tip="${monthTick(m)} · agendado pela pré-vendas: ${pv}"/>`;
+    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv-hOut}" width="${barW}" height="${hOut}" fill="var(--g-pale)" data-tip="${monthTick(m)} · sem envolvimento de pré-vendas: ${outros}"/>`;
     svg += `<text x="${xs[i]}" y="${CHART_BOTTOM+18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${monthTick(m)}${m.closed?'':'*'}</text>`;
   });
   svg += `</svg>`;
@@ -608,7 +619,7 @@ function renderHistorico(){
   const maxNs = niceMax(months.flatMap(m => [m.ns.total, m.ns.pv]), 10);
   document.getElementById('chart-noshow').innerHTML = lineChartSvg({
     months, maxVal: maxNs, fmtVal: v => `${Math.round(v)}%`,
-    refLine: { value: 10, color: '#c9a29c', label: 'meta de no-show: 10%' },
+    refLine: { value: 10, color: '#c9a29c' },
     series: [
       { name: 'No-show total', color: 'var(--text-secondary)', getValue: m => m.ns.total },
       { name: 'No-show pré-vendas', color: 'var(--g-dark)', getValue: m => m.ns.pv },
@@ -616,6 +627,7 @@ function renderHistorico(){
   });
 
   document.getElementById('chart-meta').innerHTML = barChartSvg({ months, meta: months[0].meta });
+  document.getElementById('chart-meta-goal-legend').textContent = `meta de agendamentos: ${months[0].meta}`;
 
   const origemRows = m => [...m.origem["CANAIS PRÓPRIOS"], ...m.origem["CANAIS EXTERNOS"]];
   renderSeriesChart('chart-origem', 'chart-origem-legend', months, origemRows);

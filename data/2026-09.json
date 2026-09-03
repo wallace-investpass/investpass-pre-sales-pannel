@@ -48,7 +48,7 @@
       "canalReconhecido": true,
       "agendadoPor": "Lucas Pedroso",
       "status": "realizada",
-      "noShow": true,
+      "noShow": false,
       "pipedriveId": null,
       "contato": null,
       "cargo": null,
@@ -562,7 +562,7 @@
     {
       "id": "fe54d33d",
       "empresa": "São Martinho",
-      "data": "2026-09-11",
+      "data": "2026-09-18",
       "origem": "Associados",
       "origemReconhecida": true,
       "origemTipo": "externa",
@@ -630,6 +630,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-02T22:39:11"
+    },
+    {
+      "id": "be174339",
+      "empresa": "CONRHADO",
+      "data": "2026-09-10",
+      "origem": "CONARH",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "WhatsApp",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-03T13:07:41"
     }
   ]
 }

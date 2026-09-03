@@ -49,7 +49,12 @@ def compute_all_months(months_data, taxonomia, feriados_todos, max_hist=12):
     return {
         "months": months_payload,
         "histOrder": ordered_keys[-max_hist:],
-        "defaultMes": ordered_keys[-1] if ordered_keys else None,
+        # None = sem override: o navegador escolhe o mês corrente ao vivo
+        # (initApp/pickDefaultMes em dashboard.py), não "o último mês salvo"
+        # — isso é o que evita abrir num mês futuro vazio só porque uma call
+        # foi importada adiantada (seção 5 do CLAUDE.md). Só fica não-None
+        # quando `gerar --mes` força explicitamente qual mês abre.
+        "defaultMes": None,
         "allKeys": ordered_keys,
         "feriados": feriados_todos,
     }

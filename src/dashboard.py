@@ -548,10 +548,27 @@ function checkDayRollover(){
   if (ACTIVE_TAB === 'historico') renderHistorico();
 }
 
+// Mês que o dropdown abre por padrão (seção 5 do CLAUDE.md): o mês corrente
+// pelo relógio de quem está olhando a página — nunca "o último mês salvo"
+// (um mês futuro com uma call adiantada não pode roubar o default do mês
+// corrente). Se não houver arquivo salvo pro mês corrente, cai pro mês
+// salvo mais recente ANTERIOR a ele; se nem isso existir (só há meses
+// futuros salvos), cai pro mês salvo mais antigo disponível.
+function pickDefaultMes(){
+  const keys = Object.keys(MONTHS).sort();
+  if (!keys.length) return null;
+  const atual = CURRENT_TODAY.slice(0, 7);
+  if (keys.includes(atual)) return atual;
+  const anteriores = keys.filter(k => k < atual);
+  if (anteriores.length) return anteriores[anteriores.length - 1];
+  return keys[0];
+}
+
 function initApp(){
   FERIADOS_SET = new Set(FERIADOS);
   recomputeViews();
-  if (DEFAULT_MES) renderMonth(DEFAULT_MES);
+  const defaultKey = DEFAULT_MES || pickDefaultMes();
+  if (defaultKey) renderMonth(defaultKey);
   initTooltips();
   setInterval(checkDayRollover, 60000);
 }

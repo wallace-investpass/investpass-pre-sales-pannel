@@ -1,0 +1,23 @@
+{
+  "mes": "2026-10",
+  "calls": [
+    {
+      "id": "055459c0",
+      "empresa": "Santos Brasil",
+      "data": "2026-10-08",
+      "origem": "CONARH",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "Ligação",
+      "canalReconhecido": true,
+      "agendadoPor": "Igor Ramos",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-03T13:15:11"
+    }
+  ]
+}

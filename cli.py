@@ -147,7 +147,7 @@ def cmd_gerar(args):
         print(f"  {mes}: {len(m['calls'])} call(s) salva(s) ({n_real} realizada(s), {n_ar} a_realizar salva(s) — meta {m['meta']})")
 
     if args.push:
-        _git_publish(payload["defaultMes"])
+        _git_publish(payload["defaultMes"] or meses[-1])
 
 
 def _git_publish(mes_atual):

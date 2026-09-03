@@ -257,7 +257,7 @@ CSS = '''
   .summary-grid.cols-3 { grid-template-columns:repeat(3,1fr); }
   .card.metric-card { transition:box-shadow 150ms ease; display:flex; flex-direction:column; }
   .card.metric-card:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
-  .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; min-height:48px; display:flex; align-items:flex-end; }
+  .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; min-height:48px; }
   .metric-card .value-row { flex:1; display:flex; align-items:center; }
   .metric-card .value { font-size:22px; font-weight:500; margin:0; }
   .metric-card .value.red { color:var(--red); }

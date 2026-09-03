@@ -134,37 +134,45 @@ Qualquer agendador fora dessa lista é exibido pelo primeiro nome.
 
 Layout de referência: `mockup-v3-painel-prevendas.html` (seção 1). Duas abas no topo do painel — "Detalhe mensal" e "Histórico" (seção 10) — com um dropdown de mês que só aparece na aba "Detalhe mensal" (escondido na Histórico). **O mês selecionado no dropdown é o que decide se o painel trata aquele mês como aberto ou fechado** (lista "à realizar" vazia = fechado) — nunca a data do sistema.
 
-**Header**: título "Agendamentos — [Mês] [Ano]" à esquerda. À direita: se o mês está fechado, texto "Mês encerrado"; se está aberto, a linha de MTD `MTD DD/MM · X de Y dias úteis (até DD/MM)` (mais feriados do período, se houver algum).
+**Cabeçalho do app** (fixo no topo de toda a página, acima das abas): "investPass | Painel de Pré-Vendas" à esquerda, "última atualização: DD/MM/AAAA HH:MM" à direita (horário em que o `gerar` rodou pela última vez). Não existe mais o título "Agendamentos — [Mês] [Ano]" que ficava antes disso — sem título de mês repetido no meio da página.
+
+**Linha de status do mês** (abaixo do dropdown, acima do hero): se o mês está fechado, texto "Mês encerrado"; se está aberto, `MTD DD/MM · X de Y dias úteis (até DD/MM)`. **Nunca menciona feriados na UI** — feriados continuam usados internamente pra calcular dias úteis (seção 4), mas isso é lógica de cálculo, não aparece escrito em lugar nenhum.
 
 **Hero**:
 - Rótulo fixo: "Agendamentos realizados com envolvimento de pré-vendas" (sem menção a canal próprio ou meta no título — isso já aparece no badge/barra/card de projeção).
 - Valor: canal próprio ∩ agendado pela pré-vendas, realizados e não no-show (seção 4).
-- Sub-linha abaixo do número: `{real} realizados · {no-show} no-shows` (mês fechado) ou `{real} realizados · {no-show} no-shows · +{a realizar} a realizar` (mês aberto) — `real`, `no-show` e `a realizar` todos no mesmo recorte canal-próprio ∩ pré-vendas do hero.
+- Sem sub-linha abaixo do número/badge — essa informação (realizados/no-shows/a realizar) já está coberta pelos 4 cards abaixo e pelo hover da barra (ver abaixo).
 - Badge ao lado do número:
   - Mês fechado: `{cor} {pct}% da meta`, `pct = hero / meta`.
   - Mês aberto: `{cor} {pct}% do MTD ({N} agendamentos)`, `pct = hero / esperado`, `N = esperado` arredondado, `esperado = meta × (dias úteis decorridos / dias úteis totais do mês)`. Nunca usar a palavra "ritmo" nem "esperado:" solto — sempre "MTD".
   - Cor: `<70%` vermelho, `70–90%` amarelo, `>90%` verde — esse threshold vale só para badge/barra/card de projeção do hero. **Não** vale para o card de no-show (fixo em 10%, ver 4 cards abaixo).
-- Card de projeção (ao lado do número): rótulo "Projeção final do mês" (aberto) ou "Fechamento do mês" (fechado); valor `{hero + a_realizar} de {meta}`; sub `{hero} realizadas + {a_realizar} a realizar próprios (pré-vendas)` quando aberto, sub vazio quando fechado (nunca escrever "mês encerrado" como sub-texto). Fundo/texto do card seguem a mesma cor de status do badge, sempre sincronizados.
+- Card de projeção (ao lado do número): rótulo "Projeção final do mês" (aberto) ou "Fechamento do mês" (fechado); valor `{hero + a_realizar} de {meta}`; sub `{hero} realizadas + {a_realizar} a realizar` quando aberto (sem "próprios (pré-vendas)" — já implícito no card), sub vazio quando fechado (nunca escrever "mês encerrado" como sub-texto). Fundo/texto do card seguem a mesma cor de status do badge, sempre sincronizados.
 - Barra de progresso, escala 0–meta: dois tons da **mesma** cor de status (verde/amarelo/vermelho) — escuro = realizado, claro = a realizar (a realizar já no recorte pré-vendas do hero); nunca dois tons de cores diferentes. Sem segmento/marcador "a realizar" quando o mês está fechado. Marcador triangular (não linha vertical) na posição do valor esperado pelo MTD, com label "MTD - {N}" acima (não "esperado {N}") — só aparece em mês aberto.
+- Hover: **na barra**, não no card inteiro — passar o mouse no segmento escuro mostra "{hero} realizadas" num tooltip flutuante; no segmento claro mostra "{a_realizar} a realizar". Dois hovers distintos, um por segmento.
 
 **4 cards, nessa ordem:**
-1. "À realizar no mês" (`X` canais próprios · `Y` externos, todo mundo) — **escondido quando o mês está fechado**; quando escondido, os 3 cards restantes ocupam a largura toda (grid de 3 colunas).
-2. "No-show" — total e pré-vendas lado a lado, cada um com `%` grande e sub `X de Y`. Cor do número: preto por padrão, **vermelho só se >10%** (threshold fixo, não usa as faixas do hero).
-3. "Canais próprios (todos os vendedores)" — número = total de canal próprio realizado, qualquer agendador; sub `{X} pela pré-vendas · {Y} outros vendedores` (`X` = valor do hero, `Y` = resto).
-4. "Total de agendamentos" — canais próprios + externos, sub `X realizados · Y no-shows · +Z a realizar` e nota "canais próprios + externos".
+1. "Agendamentos à realizar no mês" (`X` canais próprios · `Y` externos, todo mundo) — **escondido quando o mês está fechado**; quando escondido, os 3 cards restantes ocupam a largura toda (grid de 3 colunas).
+2. "No-show" — total e pré-vendas, um bloco em cada ponta do card (esquerda/direita), cada um com `%` grande em cima e o rótulo ("total"/"pré-vendas") embaixo. Cor do número: preto por padrão, **vermelho só se >10%** (threshold fixo, não usa as faixas do hero).
+3. "Total de agendamentos (canais próprios)" — número = **soma** de tudo que é canal próprio (realizados + no-shows + a realizar), qualquer agendador; sub `X realizados · Y no-shows` (+ `· +Z a realizar` só quando `Z > 0` — omite esse trecho inteiro quando não há nada a realizar, nunca escreve "+0 a realizar").
+4. "Total de agendamentos (canais próprios + externos)" — soma de canais próprios + externos; mesmo formato de sub do card 3 (mesma regra de omitir "+0 a realizar").
+
+Layout interno dos 4 cards: título sempre ancorado no topo (altura reservada fixa, suficiente pro maior título dos quatro, pra nenhum ficar flutuando centralizado quando o texto é curto), valor centralizado verticalmente no meio, sub-texto sempre na mesma altura no rodapé — os quatro cards com a mesma altura total e o mesmo ritmo vertical, independente de quantas linhas cada título ocupa. Hover: sombra sutil no card inteiro (esses 4 cards não têm barra/gráfico interno pra ter hover próprio, ao contrário do hero).
 
 **Breakdown de canais** (duas colunas):
 - 🌱 Origem do lead — seções "Canais próprios" e "Canais externos".
 - 📲 Canal de agendamento — lista única.
-- Cada linha: nome do canal, barra empilhada em **3 tons sóbrios de verde** (não a cor de marca — ver seção 11) — escuro = realizado (sem no-show), médio = a realizar, claro = no-show. A cor não identifica mais o canal, identifica o estágio (isso já está no texto do nome). Contagem: `{total} ({real}·NS {ns})` quando fechado, `{total} ({real} real. | {ar} a real. | {ns} no-show)` quando aberto. Só aparecem canais com pelo menos 1 registro no mês.
+- Cada linha: nome do canal, barra empilhada em **3 tons sóbrios de verde** (não a cor de marca — ver seção 11) — escuro = realizado (sem no-show), médio = a realizar, claro = no-show. A cor não identifica mais o canal, identifica o estágio (isso já está no texto do nome). Só aparecem canais com pelo menos 1 registro no mês. Hover: fundo sutil na linha inteira ao passar o mouse (efeito visual, sem dado novo).
+- Contagem: a condição é o **estado do mês** (fechado/aberto), nunca um valor individual sendo zero. Mês aberto → sempre os 3 segmentos `{real} real. | {ar} a real. | {ns} no-show`, mesmo quando algum desses valores é 0 (ex: "0 no-show" continua escrito). Mês fechado → sempre 2 segmentos `{real} real. | {ns} no-show` (a dimensão "a realizar" nem existe nesse estado, por isso some).
+- Legenda de cores (realizadas · a realizar · no-show) fixa no rodapé de **cada um** dos dois cards (ancorada embaixo via flexbox — não flutua logo depois da última linha da lista, fica sempre na mesma altura entre os dois cards mesmo quando um tem mais linhas que o outro).
 
 **Tabela de calls** — substitui o antigo formato de lista por dia. Mesmo componente nos dois casos:
 - Mês fechado: título "Todas as calls de {mês}", todas as calls do mês.
-- Mês aberto: título "Pipeline desta semana (DD/MM–DD/MM) · N calls", só as calls "a realizar" da semana corrente.
+- Mês aberto: título "Pipeline do mês ({Mês}/{Ano}) · N calls", todas as calls "a realizar" **do mês inteiro** selecionado (não mais só a semana corrente).
 - Colunas: Data, Empresa, Origem, Canal, Agendada por (apelido, seção 3), e uma tag "NO-SHOW" quando aplicável.
 - Container com scroll (`max-height`, header fixo) — nunca despejar todas as linhas sem scroll.
+- **Sem hover nas linhas** — diferente do breakdown e do "Por pessoa" abaixo.
 
-**Por pessoa**: barra com os mesmos 3 tons sóbrios de verde (realizadas · a realizar · no-show), nomes de exibição = apelidos (seção 3). Contagem `N ({real} real. | {ar} a real. | {ns} no-show)`. Legenda de cores fixa abaixo do bloco.
+**Por pessoa**: barra com os mesmos 3 tons sóbrios de verde (realizadas · a realizar · no-show), nomes de exibição = apelidos (seção 3). Contagem segue a mesma regra do breakdown (3 segmentos sempre no mês aberto, 2 no mês fechado — condição pelo estado do mês, não por valor zerado). Hover de fundo sutil na linha, igual ao breakdown. Legenda de cores fixa abaixo do bloco.
 
 ---
 
@@ -248,17 +256,17 @@ Sem dropdown de mês (escondido, seção 5). Agrega todos os meses com dado salv
 Sem chip de "meta batida" no topo (removido — não faz mais parte da aba).
 
 **Regras gerais dos 5 gráficos de linha** (no-show, pré-vendas MoM, origem, canal, pessoa):
-- Linhas finas, bolinhas pequenas.
+- Linhas finas, bolinhas pequenas. Hover: o ponto/barra sob o mouse ganha um destaque visual sutil (bolinha cresce um pouco, barra clareia), além do tooltip com o valor.
 - Nada de número pontual fixo na tela — valor de cada ponto só aparece em hover/tooltip.
 - Eixo Y discreto: 3–4 marcações, cor neutra/clara, não compete visualmente com os dados.
-- Linhas de referência (meta, meta de no-show) discretas, com label deixando claro o que representam, posicionadas de forma que nunca sejam cortadas pela borda do gráfico.
+- Linhas de referência (meta, meta de no-show) discretas — **sem texto solto dentro da área do gráfico** (isso não escala com mais meses no eixo X). O label da linha de referência vira item de legenda, junto dos outros itens (ex: "meta de no-show: 10%", "meta de agendamentos: {N}"), com um swatch tracejado pra diferenciar de série de dado real. O texto do hover de cada segmento (ex: "agendado pela pré-vendas", "sem envolvimento de pré-vendas") tem que usar exatamente a mesma palavra da legenda correspondente.
 - A escala do eixo Y é sempre dinâmica em função do maior valor da série — nunca um teto fixo (isso causava a linha de no-show vazar pra fora da área do gráfico quando um mês passava do teto hardcoded).
 - Título do card sozinho, sem subtítulo/descrição embaixo.
 
 **5 cards** (todos os meses disponíveis, abertos ou fechados, entram — não há mais filtro de "fechado" na aba Histórico):
 
 1. **Taxa de no-show ao longo dos meses** — linha: no-show total % e no-show pré-vendas % (mesmas métricas do card "No-show" da seção 5, sem filtro de origem própria), com linha de referência em 10% (label "meta de no-show: 10%").
-2. **Performance de pré-vendas MoM** — barra empilhada, **todos os canais** (próprios + externos, não só própria): segmento "agendado pela pré-vendas" (Vinicius, qualquer origem, realizado e não no-show) + segmento "resto" (total de calls realizadas do mês, qualquer canal/agendador, menos o segmento acima) — **excluindo no-shows** dos dois segmentos (o no-show já tem gráfico próprio no item 1). Note que esse "pré-vendas" aqui é mais amplo que o hero da seção 5 (que é canal próprio ∩ pré-vendas) — aqui é só ∩ pré-vendas, sem o filtro de origem. Linha de referência na meta mensal (seção 4). Espaçamento das colunas proporcional à quantidade de meses no período, não esticado pra ocupar a largura toda com poucos meses.
+2. **Performance de pré-vendas MoM** — barra empilhada, **todos os canais** (próprios + externos, não só própria): segmento "Agendado pela pré-vendas" (Vinicius, qualquer origem, realizado e não no-show) + segmento "Sem envolvimento de pré-vendas" (total de calls realizadas do mês, qualquer canal/agendador, menos o segmento acima) — **excluindo no-shows** dos dois segmentos (o no-show já tem gráfico próprio no item 1). Note que esse "pré-vendas" aqui é mais amplo que o hero da seção 5 (que é canal próprio ∩ pré-vendas) — aqui é só ∩ pré-vendas, sem o filtro de origem. Linha de referência na meta mensal (seção 4), como item de legenda (regra geral acima). Espaçamento das colunas proporcional à quantidade de meses no período, não esticado pra ocupar a largura toda com poucos meses.
 3. **Performance por Origem MoM** — linha, uma série por origem, **próprias e externas juntas** (antes só entravam as próprias), só as origens com pelo menos uma call realizada em algum mês do período.
 4. **Performance por Canal MoM** — mesmo formato do item 3, mas por canal de agendamento.
 5. **Performance por Pessoa MoM** — mesmo formato, uma série por pessoa (apelidos da seção 3).

@@ -98,6 +98,8 @@ LinkedIn Vini · LinkedIn Seixas · LinkedIn Raolho · Lista fria · Landing Pag
 **Origem do lead — canais externos (não entram na meta):**
 Associados (renomeada de "Indicação Externa" em 2026-09 — mesmo canal, nome novo) · Flash · Embaixadores
 
+**Atenção**: "Associados" existe tanto como origem (acima) quanto como canal de agendamento (abaixo) — são duas dimensões independentes, e uma call mostrar Origem=Associados e Canal=Associados ao mesmo tempo não é bug nem duplicação, é coincidência de nome confirmada como aceitável. Não "corrigir" isso automaticamente.
+
 **Canal de agendamento (como a call foi marcada — dimensão separada de "origem"):**
 LinkedIn · Ligação · Email · WhatsApp · Associados · Referral · Embaixadores
 
@@ -135,6 +137,8 @@ Qualquer agendador fora dessa lista é exibido pelo primeiro nome.
 
 Layout de referência: `mockup-v3-painel-prevendas.html` (seção 1). Duas abas no topo do painel — "Detalhe mensal" e "Histórico" (seção 10) — com um dropdown de mês que só aparece na aba "Detalhe mensal" (escondido na Histórico). **O mês selecionado no dropdown é o que decide se o painel trata aquele mês como aberto ou fechado** (lista "à realizar" vazia = fechado) — nunca a data do sistema.
 
+O dropdown de mês é um **widget customizado** (botão + lista posicionada com `position:absolute; top:100%`), não um `<select>` nativo — decisão deliberada pra garantir que a lista sempre abre pra baixo. Um `<select>` nativo delega a direção de abertura ao navegador (sem controle via CSS), e isso causava a lista abrir pra cima e cobrir o conteúdo acima em telas/viewports mais curtos. Não reverter pra `<select>` nativo sem resolver esse problema de outra forma.
+
 **Cabeçalho do app** (fixo no topo de toda a página, acima das abas): "investPass | Painel de Pré-Vendas" à esquerda, "última atualização: DD/MM/AAAA HH:MM" à direita (horário em que o `gerar` rodou pela última vez). Não existe mais o título "Agendamentos — [Mês] [Ano]" que ficava antes disso — sem título de mês repetido no meio da página.
 
 **Linha de status do mês** (abaixo do dropdown, acima do hero): se o mês está fechado, texto "Mês encerrado"; se está aberto, `MTD DD/MM · X de Y dias úteis (até DD/MM)`. **Nunca menciona feriados na UI** — feriados continuam usados internamente pra calcular dias úteis (seção 4), mas isso é lógica de cálculo, não aparece escrito em lugar nenhum.
@@ -165,11 +169,13 @@ Layout interno dos 4 cards: título sempre ancorado no topo (altura reservada fi
 - Cada linha: nome do canal, barra empilhada em **3 tons sóbrios de verde** (não a cor de marca — ver seção 11) — escuro = realizado (sem no-show), médio = a realizar, claro = no-show. A cor não identifica mais o canal, identifica o estágio (isso já está no texto do nome). Só aparecem canais com pelo menos 1 registro no mês. Hover: fundo sutil na linha inteira ao passar o mouse (efeito visual, sem dado novo).
 - Contagem: a condição é o **estado do mês** (fechado/aberto), nunca um valor individual sendo zero. Mês aberto → sempre os 3 segmentos `{real} real. | {ar} a real. | {ns} no-show`, mesmo quando algum desses valores é 0 (ex: "0 no-show" continua escrito). Mês fechado → sempre 2 segmentos `{real} real. | {ns} no-show` (a dimensão "a realizar" nem existe nesse estado, por isso some).
 - Legenda de cores (realizadas · a realizar · no-show) fixa no rodapé de **cada um** dos dois cards (ancorada embaixo via flexbox — não flutua logo depois da última linha da lista, fica sempre na mesma altura entre os dois cards mesmo quando um tem mais linhas que o outro).
+- **Mês com dado histórico incompleto** (ex: meses importados de antes de a origem/canal serem registrados por call — ver nota de proveniência na seção 9): se **nenhuma** call do mês tem origem preenchida, o card "🌱 Origem do lead" inteiro mostra só o texto "dado indisponível" no lugar do breakdown, e a legenda de cores daquele card some junto (o outro card, Canal, segue a mesma regra de forma independente — um pode estar disponível e o outro não no mesmo mês). Isso é diferente de "canal com 0 registros" (que já não aparece, regra acima) — aqui é a dimensão inteira que não tem dado em nenhuma linha do mês.
 
 **Tabela de calls** — substitui o antigo formato de lista por dia. Mesmo componente nos dois casos:
 - Mês fechado: título "Todas as calls de {mês}", todas as calls do mês.
 - Mês aberto: título "Pipeline do mês ({Mês}/{Ano}) · N calls", todas as calls "a realizar" **do mês inteiro** selecionado (não mais só a semana corrente).
 - Colunas: Data, Empresa, Origem, Canal, Agendada por (apelido, seção 3), e uma tag "NO-SHOW" quando aplicável.
+- Campo ausente (data, origem ou canal) numa call específica vira só "—" na célula correspondente, sem texto de aviso — diferente da regra acima (que é o card/breakdown inteiro faltando quando a dimensão inteira do mês não tem dado); aqui é célula a célula, mesmo num mês onde a dimensão está disponível para outras calls.
 - Container com scroll (`max-height`, header fixo) — nunca despejar todas as linhas sem scroll.
 - **Sem hover nas linhas** — diferente do breakdown e do "Por pessoa" abaixo.
 
@@ -247,6 +253,16 @@ Hoje o usuário sobe a lista completa a cada rodada. O pedido é trocar isso por
 
 Isso substitui a checagem de "calls que sumiram vs. versão anterior" (seção 6, item 3) — que fazia sentido no modelo de "sobe a lista inteira toda vez" — por um modelo onde a lista mestra nunca é sobrescrita por inteiro, só mutada por comando. Vale manter a validação de duplicata e de origem/canal desconhecido (seção 6, itens 1 e 2) rodando a cada novo registro adicionado.
 
+**Campo `origemTipo`** (própria/externa) fica gravado explicitamente em cada call, separado do campo `origem` (o texto/nome do canal). O parser sempre preenche os dois juntos a partir do mesmo valor de origem — mas o motivo de existirem separados é permitir meses com dado histórico incompleto (ver nota de proveniência abaixo) onde `origem` fica `null` mas a classificação própria/externa continua confiável e é usada pra meta, hero, e os cards de "Total de agendamentos" (seção 5). **Nunca re-derivar `origemTipo` a partir do texto de `origem`** quando `origem` for `null` — nesse caso não tem como, e é exatamente pra isso que o campo existe separado.
+
+**Proveniência dos dados de Jan–Set/2026**: importados em 2026-09 a partir de uma planilha de conferência fornecida pelo usuário (não pelo fluxo normal do parser/CLI), com níveis de completude diferentes por mês, validados contra uma aba "Resumo" com totais por fórmula:
+- Jan–Mar: `origem` e `canal` ficam `null` (dado não confiável na fonte); `origemTipo` vem de uma coluna de categoria própria/externa separada, que é confiável.
+- Abr: `origem` disponível, `canal` e `data` ficam `null`.
+- Mai–Jun: `origem` e `data` disponíveis, `canal` fica `null`.
+- Jul–Set: dado completo (origem, canal, data, agendado por, no-show).
+
+Isso é só histórico dessa importação pontual — não é uma regra permanente do parser (que sempre popula todos os campos a partir do texto colado). A regra permanente é a de "dado indisponível" na seção 5 e a de janela por gráfico na seção 10, que lidam com qualquer mês (passado ou futuro) onde `origem`/`canal` estejam `null` em todas as calls.
+
 ---
 
 ## 10. Aba "Histórico"
@@ -268,8 +284,8 @@ Sem chip de "meta batida" no topo (removido — não faz mais parte da aba).
 
 1. **Taxa de no-show ao longo dos meses** — linha: no-show total % e no-show pré-vendas % (mesmas métricas do card "No-show" da seção 5, sem filtro de origem própria), com linha de referência em 10% (label "meta de no-show: 10%").
 2. **Performance de pré-vendas MoM** — barra empilhada, **todos os canais** (próprios + externos, não só própria): segmento "Agendado pela pré-vendas" (Vinicius, qualquer origem, realizado e não no-show, projetado no mês aberto — regra geral acima) + segmento "Sem envolvimento de pré-vendas" (total de calls do mês, qualquer canal/agendador, menos o segmento acima, também projetado) — **excluindo no-shows** dos dois segmentos (o no-show já tem gráfico próprio no item 1). Esse "pré-vendas" usa a mesma definição ampliada do hero da seção 5 (agendado por Vinicius, qualquer origem) — os dois coincidem desde a revisão da seção 4. Linha de referência na meta mensal (seção 4), como item de legenda (regra geral acima). Espaçamento das colunas proporcional à quantidade de meses no período, não esticado pra ocupar a largura toda com poucos meses.
-3. **Performance por Origem MoM** — linha, uma série por origem, **próprias e externas juntas** (antes só entravam as próprias), só as origens com pelo menos uma call (realizada ou a realizar) em algum mês do período.
-4. **Performance por Canal MoM** — mesmo formato do item 3, mas por canal de agendamento.
+3. **Performance por Origem MoM** — linha, uma série por origem, **próprias e externas juntas** (antes só entravam as próprias), só as origens com pelo menos uma call (realizada ou a realizar) em algum mês do período. **Meses sem nenhum dado de origem (seção 5, "dado indisponível") ficam de fora do eixo X inteiro** — mesma lógica do "nunca mostrar mês futuro vazio" no topo desta seção, mas por disponibilidade de dado em vez de existência do arquivo.
+4. **Performance por Canal MoM** — mesmo formato do item 3, mas por canal de agendamento; mesma regra de excluir do eixo X os meses sem nenhum dado de canal.
 5. **Performance por Pessoa MoM** — mesmo formato, uma série por pessoa (apelidos da seção 3).
 
 ---

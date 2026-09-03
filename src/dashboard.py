@@ -253,7 +253,8 @@ CSS = '''
   .proj-box .p-label { font-size:11px; color:var(--text-muted); margin:0 0 3px; }
   .proj-box .p-value { font-size:18px; font-weight:600; margin:0; color:var(--text-primary); }
   .proj-box .p-sub { font-size:11px; color:var(--text-muted); margin:3px 0 0; }
-  .proj-box .p-remaining { font-size:11px; color:var(--text-primary); margin:8px 0 0; padding-top:8px; border-top:0.5px solid var(--border); }
+  .proj-box .p-remaining { font-size:11px; color:var(--text-primary); margin:8px 0 0; padding-top:8px; border-top:0.5px solid var(--border); display:flex; align-items:center; gap:6px; }
+  .proj-box .p-remaining b { font-weight:700; }
   .bar-outer { position:relative; height:14px; border-radius:7px; background:var(--surface-0); margin-top:40px; transition:box-shadow 150ms ease; }
   .bar-outer:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
   .bar-fill { position:absolute; left:0; top:0; height:100%; border-radius:7px 0 0 7px; }
@@ -648,9 +649,9 @@ function renderMonth(key){
     remainingEl.hidden = true;
   } else {
     const faltam = m.meta - (m.prevendasReal + m.pvArealizar);
-    remainingEl.textContent = faltam > 0
-      ? `Faltam ${faltam} call${faltam === 1 ? '' : 's'} · restam ${m.diasUteisRestantes} dia${m.diasUteisRestantes === 1 ? '' : 's'} úteis`
-      : 'Meta coberta pelo agendado';
+    remainingEl.innerHTML = faltam > 0
+      ? `📅 Faltam <b>${faltam} call${faltam === 1 ? '' : 's'}</b> · restam <b>${m.diasUteisRestantes} dia${m.diasUteisRestantes === 1 ? '' : 's'} úteis</b>`
+      : '📅 Meta coberta pelo agendado';
     remainingEl.hidden = false;
   }
 

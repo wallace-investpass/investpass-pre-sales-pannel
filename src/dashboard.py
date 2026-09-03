@@ -137,10 +137,8 @@ def render(payload, generated_at=""):
       </div>
     </div>
 
-    <div class="card week-card"><p class="title" id="m-week-title"></p><div id="m-week-body"></div></div>
-
     <div class="card people-card">
-      <p class="title">Por pessoa</p>
+      <p class="title">👤 Agendamentos por pessoa</p>
       <div id="m-pessoa"></div>
       <div class="p-legend">
         <span><span class="dot" style="background:var(--g-dark);"></span>realizadas</span>
@@ -148,6 +146,9 @@ def render(payload, generated_at=""):
         <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>no-show</span>
       </div>
     </div>
+
+    <div class="card week-card"><p class="title" id="m-week-title"></p><div id="m-week-body"></div></div>
+    <div class="card week-card" id="m-realized-card"><p class="title" id="m-realized-title"></p><div id="m-realized-body"></div></div>
   </div>
 
   <div id="view-historico">
@@ -515,6 +516,12 @@ function computeMonthView(mesKey, raw, hojeIso, feriadosSet){
       title: `Pipeline restante do mês (${tituloMes}) · ${mesARealizar.length} calls a realizar`,
       calls: mesARealizar.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, c.data === hojeIso]),
     };
+
+    const mesRealizadas = [...totalRealizadas].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+    view.realized = {
+      title: `Calls já realizadas no mês (${tituloMes}) · ${mesRealizadas.length} calls realizadas (ou que deveriam ter sido)`,
+      calls: mesRealizadas.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, !!c.noShow]),
+    };
   }
 
   return view;
@@ -723,12 +730,17 @@ function renderMonth(key){
     document.getElementById('m-canal').innerHTML = '<p class="week-empty">dado indisponível</p>';
   }
 
+  const realizedCard = document.getElementById('m-realized-card');
   if (m.closed) {
     document.getElementById('m-week-title').textContent = `Todas as calls de ${m.label}`;
     document.getElementById('m-week-body').innerHTML = callsTable(m.allCalls, 'closed');
+    realizedCard.hidden = true;
   } else {
     document.getElementById('m-week-title').textContent = m.week.title;
     document.getElementById('m-week-body').innerHTML = callsTable(m.week.calls, 'pipeline');
+    document.getElementById('m-realized-title').textContent = m.realized.title;
+    document.getElementById('m-realized-body').innerHTML = callsTable(m.realized.calls, 'closed');
+    realizedCard.hidden = false;
   }
 
   const maxP = Math.max(...m.pessoa.map(p => p[1] + p[2] + p[3]), 1);

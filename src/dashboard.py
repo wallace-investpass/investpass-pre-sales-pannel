@@ -83,7 +83,11 @@ def render(payload, generated_at=""):
     </div>
 
     <div class="summary-grid" id="m-summary-grid">
-      <div class="card metric-card" id="m-card-ar-wrap"><p class="label">Agendamentos à realizar no mês</p><p class="value" id="m-card-ar"></p><p class="sub" id="m-card-ar-sub"></p></div>
+      <div class="card metric-card" id="m-card-ar-wrap">
+        <p class="label">Agendamentos à realizar no mês</p>
+        <div class="value-row"><p class="value" id="m-card-ar"></p></div>
+        <p class="sub" id="m-card-ar-sub"></p>
+      </div>
       <div class="card metric-card">
         <p class="label">No-show (meta 10%)</p>
         <div class="twin">
@@ -91,8 +95,16 @@ def render(payload, generated_at=""):
           <div><p class="value" id="m-ns-pv"></p><p class="sub">pré-vendas</p></div>
         </div>
       </div>
-      <div class="card metric-card"><p class="label">Total de agendamentos (canais próprios)</p><p class="value" id="m-card-propria"></p><p class="sub" id="m-card-propria-sub"></p></div>
-      <div class="card metric-card"><p class="label">Total de agendamentos (canais próprios + externos)</p><p class="value" id="m-card-total"></p><p class="sub" id="m-card-total-sub"></p></div>
+      <div class="card metric-card">
+        <p class="label">Total de agendamentos (canais próprios)</p>
+        <div class="value-row"><p class="value" id="m-card-propria"></p></div>
+        <p class="sub" id="m-card-propria-sub"></p>
+      </div>
+      <div class="card metric-card">
+        <p class="label">Total de agendamentos (canais próprios + externos)</p>
+        <div class="value-row"><p class="value" id="m-card-total"></p></div>
+        <p class="sub" id="m-card-total-sub"></p>
+      </div>
     </div>
 
     <div class="seg-grid">
@@ -243,13 +255,14 @@ CSS = '''
 
   .summary-grid { display:grid; gap:12px; margin-bottom:14px; grid-template-columns:repeat(4,1fr); }
   .summary-grid.cols-3 { grid-template-columns:repeat(3,1fr); }
-  .card.metric-card { transition:box-shadow 150ms ease; }
+  .card.metric-card { transition:box-shadow 150ms ease; display:flex; flex-direction:column; }
   .card.metric-card:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
   .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; min-height:48px; display:flex; align-items:flex-end; }
+  .metric-card .value-row { flex:1; display:flex; align-items:center; }
   .metric-card .value { font-size:22px; font-weight:500; margin:0; }
   .metric-card .value.red { color:var(--red); }
   .metric-card .sub { font-size:11px; color:var(--text-muted); margin:6px 0 0; }
-  .twin { display:flex; gap:18px; }
+  .twin { flex:1; display:flex; justify-content:space-between; align-items:center; gap:18px; }
 
   .seg-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
   .seg-card { display:flex; flex-direction:column; }
@@ -334,18 +347,17 @@ function realizadosSubtext(real, ns, ar){
   return s;
 }
 
-function triCountLabel(real, ar, ns){
-  const parts = [];
-  if (real > 0) parts.push(`${real} real.`);
-  if (ar > 0) parts.push(`${ar} a real.`);
-  if (ns > 0) parts.push(`${ns} no-show`);
+function triCountLabel(real, ar, ns, closed){
+  const parts = [`${real} real.`];
+  if (!closed) parts.push(`${ar} a real.`);
+  parts.push(`${ns} no-show`);
   return parts.map((p, i) => `<span class="seg">${i > 0 ? '| ' : ''}${p}</span>`).join(' ');
 }
 
-function rowsHtml(list){
+function rowsHtml(list, closed){
   return list.map(([name, real, ar, ns]) => {
     const total = real + ar + ns;
-    return `<div class="ch-row"><span class="name">${name}</span>${segBar(real, ar, ns)}<span class="ch-count">${total} (${triCountLabel(real, ar, ns)})</span></div>`;
+    return `<div class="ch-row"><span class="name">${name}</span>${segBar(real, ar, ns)}<span class="ch-count">${total} (${triCountLabel(real, ar, ns, closed)})</span></div>`;
   }).join('');
 }
 
@@ -421,8 +433,9 @@ function renderMonth(key){
   const propriaNs = m.origem["CANAIS PRÓPRIOS"].reduce((s, r) => s + r[3], 0);
   const externaAr = m.origem["CANAIS EXTERNOS"].reduce((s, r) => s + r[2], 0);
 
-  document.getElementById('m-card-propria').textContent = m.prevendasReal + m.outrosPropria;
-  document.getElementById('m-card-propria-sub').textContent = realizadosSubtext(m.prevendasReal + m.outrosPropria, propriaNs, propriaAr);
+  const propriaRealizados = m.prevendasReal + m.outrosPropria;
+  document.getElementById('m-card-propria').textContent = propriaRealizados + propriaNs + propriaAr;
+  document.getElementById('m-card-propria-sub').textContent = realizadosSubtext(propriaRealizados, propriaNs, propriaAr);
 
   const grid = document.getElementById('m-summary-grid');
   const arWrap = document.getElementById('m-card-ar-wrap');
@@ -446,10 +459,10 @@ function renderMonth(key){
 
   let origemHtml = '';
   Object.keys(m.origem).forEach(section => {
-    origemHtml += `<p class="seg-section-label">${section}</p>${rowsHtml(m.origem[section])}`;
+    origemHtml += `<p class="seg-section-label">${section}</p>${rowsHtml(m.origem[section], m.closed)}`;
   });
   document.getElementById('m-origem').innerHTML = origemHtml;
-  document.getElementById('m-canal').innerHTML = rowsHtml(m.canal);
+  document.getElementById('m-canal').innerHTML = rowsHtml(m.canal, m.closed);
 
   if (m.closed) {
     document.getElementById('m-week-title').textContent = `Todas as calls de ${m.label}`;
@@ -469,7 +482,7 @@ function renderMonth(key){
         <div style="width:${ar/maxP*100}%; background:var(--g-mid);"></div>
         <div style="width:${ns/maxP*100}%; background:var(--g-pale);"></div>
       </div>
-      <span class="p-count">${total} (${triCountLabel(real, ar, ns)})</span>
+      <span class="p-count">${total} (${triCountLabel(real, ar, ns, m.closed)})</span>
     </div>`;
   }).join('');
 }

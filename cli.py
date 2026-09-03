@@ -7,10 +7,11 @@ Comandos:
       (formato compacto, uma por linha, ou mensagem(ns) do Slack) à lista mestra.
       Também serve para adicionar uma única call — não há distinção de comando.
 
-  no-show <empresa> --mes YYYY-MM [--data DD/MM] [--pipedrive-id ID]
+  no-show <empresa> --mes YYYY-MM [--data DD/MM]
       Marca uma call como no-show (status vira 'realizada', noShow=true).
+      Desambiguação por empresa + --data quando há mais de uma call.
 
-  mudar-data <empresa> --mes YYYY-MM --nova-data DD/MM [--data-atual DD/MM] [--pipedrive-id ID] [--ano YYYY]
+  mudar-data <empresa> --mes YYYY-MM --nova-data DD/MM [--data-atual DD/MM] [--ano YYYY]
       Atualiza a data de uma call. Se a nova data cair em outro mês, a call é
       movida para a lista mestra desse mês.
 
@@ -83,7 +84,7 @@ def cmd_import(args):
 
 def cmd_no_show(args):
     mes = args.mes or current_mes()
-    call, erro = store.mark_no_show(mes, args.empresa, data=_ddmm_para_iso(args.data, mes), pipedrive_id=args.pipedrive_id)
+    call, erro = store.mark_no_show(mes, args.empresa, data=_ddmm_para_iso(args.data, mes))
     if erro:
         print(f"erro: {erro}")
         sys.exit(1)
@@ -95,7 +96,7 @@ def cmd_mudar_data(args):
     ano = args.ano or int(mes.split("-")[0])
     call, novo_mes, erro = store.change_date(
         mes, args.empresa, args.nova_data, ano=ano,
-        data_atual=_ddmm_para_iso(args.data_atual, mes), pipedrive_id=args.pipedrive_id,
+        data_atual=_ddmm_para_iso(args.data_atual, mes),
     )
     if erro:
         print(f"erro: {erro}")
@@ -194,7 +195,6 @@ def main():
     p_ns.add_argument("empresa")
     p_ns.add_argument("--mes", help="YYYY-MM (default: mês atual)")
     p_ns.add_argument("--data", help="DD/MM, para desambiguar se a empresa tiver mais de uma call")
-    p_ns.add_argument("--pipedrive-id")
     p_ns.set_defaults(func=cmd_no_show)
 
     p_md = sub.add_parser("mudar-data", help="muda a data de uma call")
@@ -202,7 +202,6 @@ def main():
     p_md.add_argument("--mes", help="YYYY-MM (default: mês atual)")
     p_md.add_argument("--nova-data", required=True, help="DD/MM")
     p_md.add_argument("--data-atual", help="DD/MM, para desambiguar se a empresa tiver mais de uma call")
-    p_md.add_argument("--pipedrive-id")
     p_md.add_argument("--ano", type=int, help="ano da nova data (default: ano do --mes)")
     p_md.set_defaults(func=cmd_mudar_data)
 

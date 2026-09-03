@@ -14,18 +14,18 @@ COMPACT_RE = re.compile(
 
 SLACK_FIELD_RE = {
     "data": re.compile(r'Data da reuni[aã]o:\s*(\d{2}/\d{2})'),
-    "contato": re.compile(r'Contato:\s*(.+)'),
-    "cargo": re.compile(r'Cargo:\s*(.+)'),
     "empresa": re.compile(r'Empresa:\s*(.+)'),
     "origem": re.compile(r'Origem do lead:\s*(.+)'),
     "canal": re.compile(r'Canal de agendamento:\s*(.+)'),
     "vendedor": re.compile(r'Vendedor:\s*(.+)'),
-    "pipedrive": re.compile(r'Link do Pipedrive:\s*(.+)'),
 }
 
 
-def _make_call(empresa, data_iso, origem_raw, canal_raw, agendado_por, no_show,
-               pipedrive_id=None, contato=None, cargo=None, raw="", taxonomia=None):
+def _make_call(empresa, data_iso, origem_raw, canal_raw, agendado_por, no_show, raw="", taxonomia=None):
+    """Só persiste os campos que o modelo usa: empresa, data, origem, canal,
+    agendado por, no-show. Contato/cargo/pipedriveId NUNCA são capturados aqui —
+    data/*.json é público, e esses campos não têm uso na fórmula/dashboard
+    (seção 8 do CLAUDE.md)."""
     taxonomia = taxonomia or tax.load_taxonomia()
     origem, origem_ok = tax.normalize_origem(origem_raw, taxonomia)
     canal, canal_ok = tax.normalize_canal(canal_raw, taxonomia)
@@ -41,9 +41,6 @@ def _make_call(empresa, data_iso, origem_raw, canal_raw, agendado_por, no_show,
         "agendadoPor": agendado_por.strip(),
         "status": "realizada" if no_show else "a_realizar",
         "noShow": bool(no_show),
-        "pipedriveId": pipedrive_id,
-        "contato": contato.strip() if contato else None,
-        "cargo": cargo.strip() if cargo else None,
         "raw": raw.strip(),
         "criadoEm": datetime.datetime.now().isoformat(timespec="seconds"),
     }
@@ -92,12 +89,11 @@ def parse_slack_block(block, ano=None, taxonomia=None):
     nome_match = re.search(r'@([^\]\(]+)', vendedor_raw)
     agendado_por = nome_match.group(1).strip() if nome_match else vendedor_raw.strip()
 
-    pipedrive_url = fields.get("pipedrive", "")
-    pid_match = re.search(r'(\d+)\s*$', pipedrive_url)
-    pipedrive_id = pid_match.group(1) if pid_match else None
-
     data_iso = _ddmm_to_iso(fields["data"], ano)
 
+    # raw fica vazio pra mensagens do Slack: o bloco original pode conter Contato/
+    # Cargo/Link do Pipedrive, e isso nunca deve ser persistido (ver docstring de
+    # _make_call) — mesmo dentro de um campo de texto livre.
     return _make_call(
         empresa=fields["empresa"],
         data_iso=data_iso,
@@ -105,10 +101,7 @@ def parse_slack_block(block, ano=None, taxonomia=None):
         canal_raw=canal_principal,
         agendado_por=agendado_por,
         no_show=False,
-        pipedrive_id=pipedrive_id,
-        contato=fields.get("contato"),
-        cargo=fields.get("cargo"),
-        raw=block,
+        raw="",
         taxonomia=taxonomia,
     )
 

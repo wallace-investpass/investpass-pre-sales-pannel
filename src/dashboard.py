@@ -20,8 +20,9 @@ def render(payload, generated_at=""):
     options_html = ""
     for key in payload["allKeys"]:
         label = payload["months"][key]["label"]
-        selected = " selected" if key == default_mes else ""
-        options_html += f'<option value="{key}"{selected}>{label}</option>'
+        active = " active" if key == default_mes else ""
+        options_html += f'<div class="month-dropdown-item{active}" data-mes="{key}" onclick="selectMonth(\'{key}\')">{label}</div>'
+    default_label = payload["months"][default_mes]["label"] if default_mes else ""
 
     return f'''<!DOCTYPE html>
 <html lang="pt-BR">
@@ -50,9 +51,15 @@ def render(payload, generated_at=""):
       <button class="tab active" data-tab="mensal" onclick="switchTab('mensal')">Detalhe mensal</button>
       <button class="tab" data-tab="historico" onclick="switchTab('historico')">Histórico</button>
     </div>
-    <select id="month-filter" onchange="renderMonth(this.value)">
-      {options_html}
-    </select>
+    <div class="month-dropdown" id="month-dropdown">
+      <button type="button" class="month-dropdown-btn" id="month-dropdown-btn" onclick="toggleMonthDropdown()">
+        <span id="month-dropdown-label">{default_label}</span>
+        <span class="month-dropdown-chevron">▾</span>
+      </button>
+      <div class="month-dropdown-list" id="month-dropdown-list" hidden>
+        {options_html}
+      </div>
+    </div>
   </div>
 
   <div id="view-mensal">
@@ -216,7 +223,17 @@ CSS = '''
   .tabs { display:flex; gap:4px; border-bottom:0.5px solid var(--border); }
   .tab { padding:8px 4px; margin-right:20px; font-size:13.5px; font-weight:500; color:var(--text-muted); border-bottom:2px solid transparent; cursor:pointer; background:none; border-top:none; border-left:none; border-right:none; font-family:'Montserrat',sans-serif; }
   .tab.active { color:var(--text-primary); border-bottom:2px solid var(--text-primary); }
-  select#month-filter { height:32px; border-radius:8px; border:0.5px solid var(--border); background:var(--surface-1); padding:0 10px; font-size:13px; font-family:'Montserrat',sans-serif; }
+  .month-dropdown { position:relative; }
+  .month-dropdown-btn { height:32px; border-radius:8px; border:0.5px solid var(--border); background:var(--surface-1); padding:0 10px; font-size:13px; font-family:'Montserrat',sans-serif; color:var(--text-primary); display:flex; align-items:center; gap:8px; cursor:pointer; }
+  .month-dropdown-chevron { font-size:10px; color:var(--text-muted); }
+  .month-dropdown-list {
+    position:absolute; top:calc(100% + 4px); bottom:auto; left:0; right:0; min-width:180px;
+    background:var(--surface-1); border:0.5px solid var(--border); border-radius:8px;
+    box-shadow:0 8px 24px rgba(26,26,24,.14); max-height:280px; overflow-y:auto; z-index:20;
+  }
+  .month-dropdown-item { padding:8px 12px; font-size:13px; cursor:pointer; }
+  .month-dropdown-item:hover { background:var(--surface-0); }
+  .month-dropdown-item.active { font-weight:600; background:var(--surface-0); }
 
   .header-row { display:flex; align-items:baseline; justify-content:flex-end; margin-bottom:16px; flex-wrap:wrap; gap:6px; }
   .header-row .mtd-line { font-size:12px; color:var(--text-muted); }
@@ -377,9 +394,25 @@ function callsTable(rows, withNoShow){
   </div>`;
 }
 
+function toggleMonthDropdown(){
+  document.getElementById('month-dropdown-list').hidden = !document.getElementById('month-dropdown-list').hidden;
+}
+
+function selectMonth(key){
+  document.getElementById('month-dropdown-list').hidden = true;
+  renderMonth(key);
+}
+
+document.addEventListener('click', e => {
+  const dd = document.getElementById('month-dropdown');
+  const list = document.getElementById('month-dropdown-list');
+  if (dd && list && !list.hidden && !dd.contains(e.target)) list.hidden = true;
+});
+
 function renderMonth(key){
   const m = MONTHS[key];
-  document.getElementById('month-filter').value = key;
+  document.getElementById('month-dropdown-label').textContent = m.label;
+  document.querySelectorAll('.month-dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.mes === key));
   document.getElementById('m-mtdline').textContent = m.mtdLine;
   document.getElementById('m-hero-big').textContent = m.prevendasReal;
 
@@ -496,7 +529,8 @@ function renderMonth(key){
 function switchTab(tab){
   document.getElementById('view-mensal').style.display = tab === 'mensal' ? 'block' : 'none';
   document.getElementById('view-historico').style.display = tab === 'historico' ? 'block' : 'none';
-  document.getElementById('month-filter').style.display = tab === 'mensal' ? '' : 'none';
+  document.getElementById('month-dropdown').style.display = tab === 'mensal' ? '' : 'none';
+  if (tab !== 'mensal') document.getElementById('month-dropdown-list').hidden = true;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   if (tab === 'historico') renderHistorico();
 }

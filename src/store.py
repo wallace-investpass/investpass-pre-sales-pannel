@@ -73,12 +73,11 @@ def add_calls_bulk(mes, calls):
     return [add_call(mes, call) for call in calls]
 
 
-def find_calls(mes, empresa, data=None, pipedrive_id=None):
+def find_calls(mes, empresa, data=None):
+    """Desambiguação é sempre por empresa + data — não há pipedriveId persistido
+    (seção 8 do CLAUDE.md: descartado deliberadamente no parsing)."""
     state = load_month(mes)
     matches = []
-    if pipedrive_id:
-        matches = [c for c in state["calls"] if c.get("pipedriveId") == pipedrive_id]
-        return state, matches
     empresa_norm = empresa.strip().lower()
     for c in state["calls"]:
         if empresa_norm in c["empresa"].strip().lower():
@@ -89,11 +88,11 @@ def find_calls(mes, empresa, data=None, pipedrive_id=None):
 
 def _ambiguous_msg(matches, campo_para_desambiguar):
     opcoes = "; ".join(f"{m['empresa']} em {m['data']} (id {m['id']})" for m in matches)
-    return f"mais de uma call encontrada, especifique {campo_para_desambiguar} ou --pipedrive-id: {opcoes}"
+    return f"mais de uma call encontrada, especifique {campo_para_desambiguar}: {opcoes}"
 
 
-def mark_no_show(mes, empresa, data=None, pipedrive_id=None):
-    state, matches = find_calls(mes, empresa, data, pipedrive_id)
+def mark_no_show(mes, empresa, data=None):
+    state, matches = find_calls(mes, empresa, data)
     if len(matches) == 0:
         return None, "nenhuma call encontrada"
     if len(matches) > 1:
@@ -110,12 +109,12 @@ def _ddmm_to_iso(ddmm, ano):
     return f"{ano:04d}-{int(mes):02d}-{int(dia):02d}"
 
 
-def change_date(mes, empresa, nova_data_ddmm, ano=None, data_atual=None, pipedrive_id=None):
+def change_date(mes, empresa, nova_data_ddmm, ano=None, data_atual=None):
     """Muda a data de uma call. Se a nova data cair em outro mês, a call sai da
     lista mestra atual e vai para a do mês de destino (seção 4 — reagendamento
     entre meses)."""
     ano = ano or datetime.date.today().year
-    state, matches = find_calls(mes, empresa, data_atual, pipedrive_id)
+    state, matches = find_calls(mes, empresa, data_atual)
     if len(matches) == 0:
         return None, mes, "nenhuma call encontrada"
     if len(matches) > 1:

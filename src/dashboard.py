@@ -111,7 +111,7 @@ def render(payload, generated_at=""):
       <div class="card seg-card">
         <p class="title">🌱 Origem do lead</p>
         <div id="m-origem"></div>
-        <div class="p-legend">
+        <div class="p-legend" id="m-origem-legend">
           <span><span class="dot" style="background:var(--g-dark);"></span>realizadas</span>
           <span><span class="dot" style="background:var(--g-mid);"></span>a realizar</span>
           <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>no-show</span>
@@ -120,7 +120,7 @@ def render(payload, generated_at=""):
       <div class="card seg-card">
         <p class="title">📲 Canal de agendamento</p>
         <div id="m-canal"></div>
-        <div class="p-legend">
+        <div class="p-legend" id="m-canal-legend">
           <span><span class="dot" style="background:var(--g-dark);"></span>realizadas</span>
           <span><span class="dot" style="background:var(--g-mid);"></span>a realizar</span>
           <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>no-show</span>
@@ -429,13 +429,8 @@ function renderMonth(key){
     document.getElementById('m-bar-marker-label').textContent = `MTD - ${Math.round(expectedForMarker)}`;
   }
 
-  const propriaAr = m.origem["CANAIS PRÓPRIOS"].reduce((s, r) => s + r[2], 0);
-  const propriaNs = m.origem["CANAIS PRÓPRIOS"].reduce((s, r) => s + r[3], 0);
-  const externaAr = m.origem["CANAIS EXTERNOS"].reduce((s, r) => s + r[2], 0);
-
-  const propriaRealizados = m.prevendasReal + m.outrosPropria;
-  document.getElementById('m-card-propria').textContent = propriaRealizados + propriaNs + propriaAr;
-  document.getElementById('m-card-propria-sub').textContent = realizadosSubtext(propriaRealizados, propriaNs, propriaAr);
+  document.getElementById('m-card-propria').textContent = m.propriaRealTotal + m.propriaNs + m.propriaAr;
+  document.getElementById('m-card-propria-sub').textContent = realizadosSubtext(m.propriaRealTotal, m.propriaNs, m.propriaAr);
 
   const grid = document.getElementById('m-summary-grid');
   const arWrap = document.getElementById('m-card-ar-wrap');
@@ -445,8 +440,8 @@ function renderMonth(key){
   } else {
     arWrap.style.display = '';
     grid.classList.remove('cols-3');
-    document.getElementById('m-card-ar').textContent = propriaAr + externaAr;
-    document.getElementById('m-card-ar-sub').textContent = `${propriaAr} canais próprios · ${externaAr} externos`;
+    document.getElementById('m-card-ar').textContent = m.propriaAr + m.externaAr;
+    document.getElementById('m-card-ar-sub').textContent = `${m.propriaAr} canais próprios · ${m.externaAr} externos`;
   }
 
   document.getElementById('m-ns-total').textContent = `${m.ns.total}%`;
@@ -457,12 +452,23 @@ function renderMonth(key){
   document.getElementById('m-card-total').textContent = m.totalReal + m.totalNs + m.totalAr;
   document.getElementById('m-card-total-sub').textContent = realizadosSubtext(m.totalReal, m.totalNs, m.totalAr);
 
-  let origemHtml = '';
-  Object.keys(m.origem).forEach(section => {
-    origemHtml += `<p class="seg-section-label">${section}</p>${rowsHtml(m.origem[section], m.closed)}`;
-  });
-  document.getElementById('m-origem').innerHTML = origemHtml;
-  document.getElementById('m-canal').innerHTML = rowsHtml(m.canal, m.closed);
+  document.getElementById('m-origem-legend').style.display = m.origemDisponivel ? '' : 'none';
+  if (m.origemDisponivel) {
+    let origemHtml = '';
+    Object.keys(m.origem).forEach(section => {
+      origemHtml += `<p class="seg-section-label">${section}</p>${rowsHtml(m.origem[section], m.closed)}`;
+    });
+    document.getElementById('m-origem').innerHTML = origemHtml;
+  } else {
+    document.getElementById('m-origem').innerHTML = '<p class="week-empty">dado indisponível</p>';
+  }
+
+  document.getElementById('m-canal-legend').style.display = m.canalDisponivel ? '' : 'none';
+  if (m.canalDisponivel) {
+    document.getElementById('m-canal').innerHTML = rowsHtml(m.canal, m.closed);
+  } else {
+    document.getElementById('m-canal').innerHTML = '<p class="week-empty">dado indisponível</p>';
+  }
 
   if (m.closed) {
     document.getElementById('m-week-title').textContent = `Todas as calls de ${m.label}`;
@@ -533,22 +539,30 @@ function refLineSvg(y, color){
   return `<line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="${color}" stroke-dasharray="4,4" stroke-width="1" opacity="0.7"/>`;
 }
 
-function lineChartSvg({ months, series, maxVal, fmtVal, refLine }){
+function lineChartSvg({ months, series, maxVal, fmtVal, refLine, openMonthMarker }){
   const xs = xPositions(months.length, CHART_LEFT+24, CHART_RIGHT-24);
   const yFor = v => CHART_BOTTOM - (v/maxVal) * (CHART_BOTTOM - CHART_TOP);
+  const n = months.length;
+  const lastOpen = !!openMonthMarker && n > 1 && !months[n-1].closed;
   let svg = `<svg viewBox="0 0 720 200" width="100%">`;
   svg += axisSvg(yTicks(maxVal), fmtVal);
   svg += `<line x1="${CHART_LEFT}" y1="${CHART_BOTTOM}" x2="${CHART_RIGHT}" y2="${CHART_BOTTOM}" stroke="var(--border)"/>`;
   if (refLine) svg += refLineSvg(yFor(refLine.value), refLine.color);
   series.forEach(s => {
-    const pts = months.map((m,i) => `${xs[i]},${yFor(s.getValue(m))}`).join(' ');
+    const vals = months.map(m => s.getValue(m));
+    const solidCount = lastOpen ? n - 1 : n;
+    const pts = vals.slice(0, solidCount).map((v,i) => `${xs[i]},${yFor(v)}`).join(' ');
     svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="1.5"/>`;
+    if (lastOpen) {
+      svg += `<line x1="${xs[n-2]}" y1="${yFor(vals[n-2])}" x2="${xs[n-1]}" y2="${yFor(vals[n-1])}" stroke="${s.color}" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    }
     svg += months.map((m,i) => {
-      const v = s.getValue(m);
-      return `<circle cx="${xs[i]}" cy="${yFor(v)}" r="2.5" fill="${s.color}" data-tip="${s.name} · ${monthTick(m)}: ${fmtVal(v)}"/>`;
+      const v = vals[i];
+      const proj = (lastOpen && i === n - 1) ? ' (projeção)' : '';
+      return `<circle cx="${xs[i]}" cy="${yFor(v)}" r="2.5" fill="${s.color}" data-tip="${s.name} · ${monthTick(m)}${proj}: ${fmtVal(v)}"/>`;
     }).join('');
   });
-  svg += months.map((m,i) => `<text x="${xs[i]}" y="${CHART_BOTTOM+18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${monthTick(m)}</text>`).join('');
+  svg += months.map((m,i) => `<text x="${xs[i]}" y="${CHART_BOTTOM+18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${monthTick(m)}${(lastOpen && i===n-1)?'*':''}</text>`).join('');
   svg += `</svg>`;
   return svg;
 }
@@ -560,7 +574,7 @@ function barChartSvg({ months, meta }){
   const startX = CHART_LEFT + 24 + (usable - totalWidth) / 2 + slot / 2;
   const xs = months.map((_, i) => startX + i * slot);
   const barW = Math.min(48, slot * 0.55);
-  const maxVal = niceMax(months.map(m => m.totalReal), meta);
+  const maxVal = niceMax(months.map(m => m.totalReal + m.totalAr), meta);
   const yFor = v => CHART_BOTTOM - (v/maxVal) * (CHART_BOTTOM - CHART_TOP);
 
   let svg = `<svg viewBox="0 0 720 200" width="100%">`;
@@ -568,22 +582,29 @@ function barChartSvg({ months, meta }){
   svg += `<line x1="${CHART_LEFT}" y1="${CHART_BOTTOM}" x2="${CHART_RIGHT}" y2="${CHART_BOTTOM}" stroke="var(--border)"/>`;
   svg += refLineSvg(yFor(meta), '#a9a89f');
   months.forEach((m, i) => {
-    const pv = m.presalesRealTotal;
-    const outros = m.totalReal - pv;
+    // mês aberto projeta: realizado + a realizar (mês fechado tem ar=0, então não muda nada).
+    const pv = m.presalesRealTotal + m.pvArealizar;
+    const total = m.totalReal + m.totalAr;
+    const outros = total - pv;
+    const proj = m.closed ? '' : ' (projeção)';
     const x = xs[i] - barW/2;
     const hPv = CHART_BOTTOM - yFor(pv);
     const hOut = (CHART_BOTTOM - yFor(pv + outros)) - hPv;
-    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv}" width="${barW}" height="${hPv}" fill="var(--g-dark)" data-tip="${monthTick(m)} · agendado pela pré-vendas: ${pv}"/>`;
-    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv-hOut}" width="${barW}" height="${hOut}" fill="var(--g-pale)" data-tip="${monthTick(m)} · sem envolvimento de pré-vendas: ${outros}"/>`;
+    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv}" width="${barW}" height="${hPv}" fill="var(--g-dark)" data-tip="${monthTick(m)} · agendado pela pré-vendas${proj}: ${pv}"/>`;
+    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv-hOut}" width="${barW}" height="${hOut}" fill="var(--g-pale)" data-tip="${monthTick(m)} · sem envolvimento de pré-vendas${proj}: ${outros}"/>`;
     svg += `<text x="${xs[i]}" y="${CHART_BOTTOM+18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${monthTick(m)}${m.closed?'':'*'}</text>`;
   });
   svg += `</svg>`;
   return svg;
 }
 
+function rowProjected(r){
+  return r[1] + r[2]; // realizada + a_realizar (projeção do mês corrente; mês fechado tem ar=0)
+}
+
 function seriesFromRows(months, getRows){
   const names = new Set();
-  months.forEach(m => getRows(m).forEach(r => { if (r[1] > 0) names.add(r[0]); }));
+  months.forEach(m => getRows(m).forEach(r => { if (rowProjected(r) > 0) names.add(r[0]); }));
   return [...names];
 }
 
@@ -594,12 +615,12 @@ function renderSeriesChart(containerId, legendId, months, getRows){
     document.getElementById(legendId).innerHTML = '';
     return;
   }
-  const maxVal = niceMax(months.flatMap(m => getRows(m).map(r => r[1])), 1);
+  const maxVal = niceMax(months.flatMap(m => getRows(m).map(rowProjected)), 1);
   const series = names.map((name, i) => ({
     name, color: SERIES_COLORS[i % SERIES_COLORS.length],
-    getValue: m => (getRows(m).find(r => r[0] === name) || [name,0,0,0])[1],
+    getValue: m => rowProjected(getRows(m).find(r => r[0] === name) || [name,0,0,0]),
   }));
-  document.getElementById(containerId).innerHTML = lineChartSvg({ months, series, maxVal, fmtVal: v => Math.round(v) });
+  document.getElementById(containerId).innerHTML = lineChartSvg({ months, series, maxVal, fmtVal: v => Math.round(v), openMonthMarker: true });
   document.getElementById(legendId).innerHTML = series.map(s =>
     `<span><span class="line-swatch" style="background:${s.color};"></span>${s.name}</span>`
   ).join('');
@@ -643,8 +664,10 @@ function renderHistorico(){
   document.getElementById('chart-meta-goal-legend').textContent = `meta de agendamentos: ${months[0].meta}`;
 
   const origemRows = m => [...m.origem["CANAIS PRÓPRIOS"], ...m.origem["CANAIS EXTERNOS"]];
-  renderSeriesChart('chart-origem', 'chart-origem-legend', months, origemRows);
-  renderSeriesChart('chart-canal', 'chart-canal-legend', months, m => m.canal);
+  const monthsOrigem = months.filter(m => m.origemDisponivel);
+  const monthsCanal = months.filter(m => m.canalDisponivel);
+  renderSeriesChart('chart-origem', 'chart-origem-legend', monthsOrigem, origemRows);
+  renderSeriesChart('chart-canal', 'chart-canal-legend', monthsCanal, m => m.canal);
   renderSeriesChart('chart-pessoa', 'chart-pessoa-legend', months, m => m.pessoa);
 }
 '''

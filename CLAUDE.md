@@ -118,15 +118,16 @@ Qualquer agendador fora dessa lista é exibido pelo primeiro nome.
 ## 4. Regras de negócio
 
 - Meta mensal calibrada: **20 reuniões realizadas via canais próprios**.
-- **Envolvimento de pré-vendas (métrica do hero, seção 5) = interseção canal próprio ∩ agendado por Vinicius Almeida.** Uma call de canal externo agendada pelo Vinicius (ex: Cayro Contabilidade via Flash) não entra nessa métrica — mas conta nas métricas de no-show pré-vendas abaixo, que continuam sem esse filtro de origem.
-- **No-show pré-vendas**: só conta no-shows de calls agendadas pelo Vinicius — **sem** filtrar por origem própria/externa (é uma métrica diferente da de envolvimento de pré-vendas acima; ver card "No-show" na seção 5).
+- **Envolvimento de pré-vendas (métrica do hero, seção 5) = agendado por Vinicius Almeida, qualquer origem** (própria ou externa) — **não** exige canal próprio. Uma call de canal externo agendada pelo Vinicius (ex: Cayro Contabilidade via Flash) entra normalmente nessa métrica, no hero, no badge/barra/projeção e no cálculo de MTD/esperado. O card "Total de agendamentos (canais próprios)" (seção 5) é uma métrica separada e independente — continua sendo o total de canal próprio de qualquer agendador, não muda com essa regra.
+- **No-show pré-vendas**: só conta no-shows de calls agendadas pelo Vinicius — **sem** filtrar por origem própria/externa (já era assim antes e continua igual; ver card "No-show" na seção 5).
 - **Lucas Pedroso** gerencia Indicação Externa (Associados) — não conta como pré-vendas. *Atenção: no exemplo real ele também agendou uma reunião via CONARH (Marsh/Mercer, 31/08) — não assumir que Lucas Pedroso só aparece em linhas de Associados/Indicação Externa.*
 - CONARH = canal próprio, conta na meta.
 - Flash e Embaixadores = externos, não contam na meta.
 - Landing Page = canal próprio.
 - Calls reagendadas dentro do mesmo mês: contam no mês original.
 - Calls reagendadas para outro mês: saem do mês atual e vão para o próximo.
-- Dias úteis para MTD: calculado até a última sexta ou o dia atual se for sexta — feriados deduzidos. Só se aplica a meses **abertos** (seção 5) — mês fechado não calcula MTD, compara direto com a meta.
+- Dias úteis para MTD: cutoff (usado no label "MTD DD/MM") é a última sexta ou o dia atual se for sexta — feriados deduzidos. **Dias úteis decorridos nunca inclui o dia de hoje**, mesmo quando esse cutoff cai em cima de hoje (dia ainda não terminou) — conta só dias 100% completos, estritamente antes de hoje. Só se aplica a meses **abertos** (seção 5) — mês fechado não calcula MTD, compara direto com a meta.
+- Auto-transição "a realizar" → "realizada" (seção 9): só quando a data da call é estritamente anterior a hoje (`data < hoje`) — nunca no próprio dia da call.
 
 ---
 
@@ -140,7 +141,7 @@ Layout de referência: `mockup-v3-painel-prevendas.html` (seção 1). Duas abas 
 
 **Hero**:
 - Rótulo fixo: "Agendamentos realizados com envolvimento de pré-vendas" (sem menção a canal próprio ou meta no título — isso já aparece no badge/barra/card de projeção).
-- Valor: canal próprio ∩ agendado pela pré-vendas, realizados e não no-show (seção 4).
+- Valor: agendado pela pré-vendas (qualquer origem), realizados e não no-show (seção 4).
 - Sem sub-linha abaixo do número/badge — essa informação (realizados/no-shows/a realizar) já está coberta pelos 4 cards abaixo e pelo hover da barra (ver abaixo).
 - Badge ao lado do número:
   - Mês fechado: `{cor} {pct}% da meta`, `pct = hero / meta`.
@@ -262,12 +263,13 @@ Sem chip de "meta batida" no topo (removido — não faz mais parte da aba).
 - Linhas de referência (meta, meta de no-show) discretas — **sem texto solto dentro da área do gráfico** (isso não escala com mais meses no eixo X). O label da linha de referência vira item de legenda, junto dos outros itens (ex: "meta de no-show: 10%", "meta de agendamentos: {N}"), com um swatch tracejado pra diferenciar de série de dado real. O texto do hover de cada segmento (ex: "agendado pela pré-vendas", "sem envolvimento de pré-vendas") tem que usar exatamente a mesma palavra da legenda correspondente.
 - A escala do eixo Y é sempre dinâmica em função do maior valor da série — nunca um teto fixo (isso causava a linha de no-show vazar pra fora da área do gráfico quando um mês passava do teto hardcoded).
 - Título do card sozinho, sem subtítulo/descrição embaixo.
+- **Projeção do mês corrente (aberto) nos gráficos de VOLUME**: "Performance de pré-vendas MoM", "Performance por Origem MoM", "Performance por Canal MoM" e "Performance por Pessoa MoM" usam realizado + a realizar como valor do ponto/barra do mês aberto (mês fechado tem "a realizar" = 0, então o valor não muda). Marcação visual de que é projeção: "*" no label do eixo X desse ponto/barra + "(projeção)" no tooltip; nos gráficos de linha, o segmento final (penúltimo → último ponto) é tracejado. **Exceção: "Taxa de no-show ao longo dos meses" NÃO projeta** — no-show só existe depois que a call acontece, então esse gráfico usa só o que já foi realizado, sem marcação de projeção.
 
 **5 cards** (todos os meses disponíveis, abertos ou fechados, entram — não há mais filtro de "fechado" na aba Histórico):
 
 1. **Taxa de no-show ao longo dos meses** — linha: no-show total % e no-show pré-vendas % (mesmas métricas do card "No-show" da seção 5, sem filtro de origem própria), com linha de referência em 10% (label "meta de no-show: 10%").
-2. **Performance de pré-vendas MoM** — barra empilhada, **todos os canais** (próprios + externos, não só própria): segmento "Agendado pela pré-vendas" (Vinicius, qualquer origem, realizado e não no-show) + segmento "Sem envolvimento de pré-vendas" (total de calls realizadas do mês, qualquer canal/agendador, menos o segmento acima) — **excluindo no-shows** dos dois segmentos (o no-show já tem gráfico próprio no item 1). Note que esse "pré-vendas" aqui é mais amplo que o hero da seção 5 (que é canal próprio ∩ pré-vendas) — aqui é só ∩ pré-vendas, sem o filtro de origem. Linha de referência na meta mensal (seção 4), como item de legenda (regra geral acima). Espaçamento das colunas proporcional à quantidade de meses no período, não esticado pra ocupar a largura toda com poucos meses.
-3. **Performance por Origem MoM** — linha, uma série por origem, **próprias e externas juntas** (antes só entravam as próprias), só as origens com pelo menos uma call realizada em algum mês do período.
+2. **Performance de pré-vendas MoM** — barra empilhada, **todos os canais** (próprios + externos, não só própria): segmento "Agendado pela pré-vendas" (Vinicius, qualquer origem, realizado e não no-show, projetado no mês aberto — regra geral acima) + segmento "Sem envolvimento de pré-vendas" (total de calls do mês, qualquer canal/agendador, menos o segmento acima, também projetado) — **excluindo no-shows** dos dois segmentos (o no-show já tem gráfico próprio no item 1). Esse "pré-vendas" usa a mesma definição ampliada do hero da seção 5 (agendado por Vinicius, qualquer origem) — os dois coincidem desde a revisão da seção 4. Linha de referência na meta mensal (seção 4), como item de legenda (regra geral acima). Espaçamento das colunas proporcional à quantidade de meses no período, não esticado pra ocupar a largura toda com poucos meses.
+3. **Performance por Origem MoM** — linha, uma série por origem, **próprias e externas juntas** (antes só entravam as próprias), só as origens com pelo menos uma call (realizada ou a realizar) em algum mês do período.
 4. **Performance por Canal MoM** — mesmo formato do item 3, mas por canal de agendamento.
 5. **Performance por Pessoa MoM** — mesmo formato, uma série por pessoa (apelidos da seção 3).
 
@@ -297,7 +299,7 @@ Fonte de verdade de layout: `mockup-v3-painel-prevendas.html` (raiz do projeto) 
 
 - **Repositório**: [`wallace-investpass/investpass-pre-sales-pannel`](https://github.com/wallace-investpass/investpass-pre-sales-pannel), público, dedicado (não reaproveita o `investpass-conversion-dashboard`, que é outro projeto — app Python/Heroku pra Conversion Intelligence).
 - **Link do painel (GitHub Pages)**: **https://wallace-investpass.github.io/investpass-pre-sales-pannel/** — esse é o link fixo pra compartilhar com o time e usar no report semanal do Slack.
-- **Decisão de privacidade**: `data/*.json` (lista mestra, com nome de contato/cargo/pipedriveId) está no `.gitignore` — só existe localmente, nunca é commitada. Só o HTML gerado (`docs/index.html`, que já expõe nomes de empresa/métricas agregadas — mesmo trade-off aceito pra o painel em si) vai pro repositório público. Isso evita expor dado além do que o painel já mostra (contato/cargo/ID do Pipedrive não aparecem no dashboard).
-- **Implicação**: como `data/` não é versionada, não há backup automático da lista mestra via git — só existe na máquina local. Vale considerar algum backup separado se isso virar um risco.
+- **`data/*.json` é versionado** (removido do `.gitignore` em 2026-09) — a lista mestra por mês vai pro mesmo repositório público do dashboard, e o commit/push de `gerar --push` inclui tanto `docs/index.html` quanto `data/`. Isso dá backup automático da lista mestra via git (antes só existia na máquina local).
+- **Atenção de privacidade**: os campos `contato`, `cargo` e `pipedriveId` (capturados a partir do formato Slack, seção 8) ficam expostos no repositório público a partir do momento em que uma call é importada com esses campos preenchidos — o dashboard em si não os exibe, mas o JSON bruto fica público. Se isso for um problema, considerar não preencher esses campos, ou tratá-los antes de commitar.
 - **Pages**: "Deploy from a branch", branch `main`, pasta `/docs` (sem step de build — o HTML gerado já é o artefato final).
 - **Publicação automática**: `python3 cli.py gerar --push` gera `docs/index.html` e, se houver mudança, faz `git add docs && git commit && git push` sozinho — é o comando usado sempre que uma atualização real (não teste/dev) precisa ir pro ar. `gerar` sem `--push` só atualiza o arquivo local, sem tocar no git (usado pra iteração/teste).

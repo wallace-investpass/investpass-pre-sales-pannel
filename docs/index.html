@@ -3,18 +3,641 @@
 <head>
 <meta charset="UTF-8">
 <title>Painel de Pré-vendas — investPass</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;900&display=swap" rel="stylesheet">
 <style>
-  body { margin:0; padding:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-    background:#F1F5F8; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#1a1a18; }
-  .box { text-align:center; }
-  .box h1 { font-size:18px; font-weight:600; margin:0 0 8px; }
-  .box p { font-size:13px; color:#6b6a63; margin:0; }
+
+  :root {
+    --surface-0:#F1F5F8; --surface-1:#ffffff; --text-primary:#1a1a18;
+    --text-secondary:#6b6a63; --text-muted:#9a9990; --border:#e3e2db;
+    --brand-green:#0ED555;
+    --g-dark:#3f7a5c;   /* realizadas - sóbrio */
+    --g-mid:#8fbf9e;    /* a realizar - sóbrio */
+    --g-pale:#d9ebe0;   /* no-show - sóbrio */
+    --green-bg:#e6f9ec; --green-text:#0a6b2b;
+    --amber:#b5790e; --amber-bg:#faeeda;
+    --red:#c0392b; --red-bg:#fcebeb;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:32px; background:var(--surface-0); font-family:'Montserrat',sans-serif; color:var(--text-primary); }
+  .wrap { max-width:1080px; margin:0 auto; }
+
+  .app-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:8px; }
+  .app-header .updated { font-size:12px; color:var(--text-muted); }
+
+  .top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+  .tabs { display:flex; gap:4px; border-bottom:0.5px solid var(--border); }
+  .tab { padding:8px 4px; margin-right:20px; font-size:13.5px; font-weight:500; color:var(--text-muted); border-bottom:2px solid transparent; cursor:pointer; background:none; border-top:none; border-left:none; border-right:none; font-family:'Montserrat',sans-serif; }
+  .tab.active { color:var(--text-primary); border-bottom:2px solid var(--text-primary); }
+  select#month-filter { height:32px; border-radius:8px; border:0.5px solid var(--border); background:var(--surface-1); padding:0 10px; font-size:13px; font-family:'Montserrat',sans-serif; }
+
+  .header-row { display:flex; align-items:baseline; justify-content:flex-end; margin-bottom:16px; flex-wrap:wrap; gap:6px; }
+  .header-row .mtd-line { font-size:12px; color:var(--text-muted); }
+
+  .card { background:var(--surface-1); border:0.5px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:14px; }
+  .hero-top { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .hero-label { font-size:11.5px; font-weight:600; color:var(--text-secondary); letter-spacing:0.02em; text-transform:uppercase; margin:0 0 6px; }
+  .hero-number { display:flex; align-items:baseline; gap:10px; }
+  .hero-number .big { font-size:42px; font-weight:600; line-height:1; }
+  .badge { padding:5px 12px; border-radius:8px; font-size:12.5px; font-weight:600; white-space:nowrap; }
+  .badge-green { background:var(--green-bg); color:var(--green-text); }
+  .badge-amber { background:var(--amber-bg); color:var(--amber); }
+  .badge-red { background:var(--red-bg); color:var(--red); }
+  .proj-box { background:var(--surface-0); border-radius:10px; padding:10px 14px; min-width:170px; border:0.5px solid transparent; }
+  .proj-box .p-label { font-size:11px; color:var(--text-muted); margin:0 0 3px; }
+  .proj-box .p-value { font-size:18px; font-weight:600; margin:0; }
+  .proj-box .p-sub { font-size:11px; color:var(--text-muted); margin:3px 0 0; }
+  .proj-box.proj-green { background:var(--green-bg); border-color:#bfe6cb; }
+  .proj-box.proj-green .p-value { color:var(--green-text); }
+  .proj-box.proj-amber { background:var(--amber-bg); border-color:#eecf9c; }
+  .proj-box.proj-amber .p-value { color:var(--amber); }
+  .proj-box.proj-red { background:var(--red-bg); border-color:#eeb8b0; }
+  .proj-box.proj-red .p-value { color:var(--red); }
+  .bar-outer { position:relative; height:14px; border-radius:7px; background:var(--surface-0); margin-top:40px; transition:box-shadow 150ms ease; }
+  .bar-outer:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
+  .bar-fill { position:absolute; left:0; top:0; height:100%; border-radius:7px 0 0 7px; }
+  .bar-fill.bar-green { background:var(--brand-green); }
+  .bar-fill.bar-amber { background:#e0a838; }
+  .bar-fill.bar-red { background:var(--red); }
+  .bar-fill-ar { position:absolute; top:0; height:100%; }
+  .bar-fill-ar.bar-green { background:#a8ecc0; }
+  .bar-fill-ar.bar-amber { background:#f3d99b; }
+  .bar-fill-ar.bar-red { background:#f0b3ac; }
+  .bar-marker { position:absolute; top:-9px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:9px solid var(--text-primary); transform:translateX(-6px); }
+  .bar-marker .m-label { position:absolute; top:-24px; left:50%; transform:translateX(-50%); font-size:10px; font-weight:600; color:var(--text-secondary); white-space:nowrap; }
+
+  .summary-grid { display:grid; gap:12px; margin-bottom:14px; grid-template-columns:repeat(4,1fr); }
+  .summary-grid.cols-3 { grid-template-columns:repeat(3,1fr); }
+  .card.metric-card { transition:box-shadow 150ms ease; display:flex; flex-direction:column; }
+  .card.metric-card:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
+  .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; min-height:48px; }
+  .metric-card .value-row { flex:1; display:flex; align-items:center; }
+  .metric-card .value { font-size:22px; font-weight:500; margin:0; }
+  .metric-card .value.red { color:var(--red); }
+  .metric-card .sub { font-size:11px; color:var(--text-muted); margin:6px 0 0; }
+  .twin { flex:1; display:flex; justify-content:space-between; align-items:center; gap:18px; }
+
+  .seg-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+  .seg-card { display:flex; flex-direction:column; }
+  .seg-card .title { font-size:13px; color:var(--text-secondary); margin:0 0 10px; font-weight:600; }
+  .seg-card .p-legend { margin-top:auto; padding-top:12px; }
+  .seg-section-label { font-size:10.5px; font-weight:700; color:var(--text-muted); letter-spacing:0.03em; margin:12px 0 6px; text-transform:uppercase; }
+  .seg-section-label:first-of-type { margin-top:0; }
+  .ch-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; min-height:32px; border-radius:8px; padding:2px 6px; margin-left:-6px; margin-right:-6px; transition:background 150ms ease; }
+  .ch-row:hover { background:var(--surface-0); }
+  .ch-row .name { font-size:12px; width:120px; flex-shrink:0; }
+  .ch-track { flex:1; background:var(--surface-0); border-radius:4px; height:8px; overflow:hidden; display:flex; }
+  .ch-count { font-size:11px; width:150px; text-align:right; color:var(--text-muted); flex-shrink:0; line-height:1.45; }
+  .ch-count .seg { white-space:nowrap; }
+
+  .week-card .title { font-size:13px; font-weight:600; margin:0 0 10px; }
+  .week-empty { color:var(--text-muted); font-size:12.5px; font-style:italic; }
+
+  table.calls-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .calls-table-scroll { max-height:280px; overflow-y:auto; border:0.5px solid var(--border); border-radius:8px; }
+  table.calls-table thead th { position:sticky; top:0; background:var(--surface-1); z-index:1; }
+  table.calls-table th { text-align:left; padding:8px 10px; font-size:10.5px; text-transform:uppercase; color:var(--text-muted); border-bottom:0.5px solid var(--border); }
+  table.calls-table td { padding:7px 10px; border-bottom:0.5px solid var(--border); }
+  table.calls-table tbody tr:last-child td { border-bottom:none; }
+  .ns-tag { background:var(--red-bg); color:var(--red); font-size:10px; padding:1px 6px; border-radius:5px; margin-left:6px; }
+
+  .people-card .title { font-size:13px; font-weight:600; margin:0 0 10px; }
+  .p-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; min-height:32px; border-radius:8px; padding:2px 6px; margin-left:-6px; margin-right:-6px; transition:background 150ms ease; }
+  .p-row:hover { background:var(--surface-0); }
+  .p-row .name { font-size:12.5px; width:70px; flex-shrink:0; font-weight:500; }
+  .p-track { flex:1; background:var(--surface-0); border-radius:4px; height:9px; overflow:hidden; display:flex; }
+  .p-count { font-size:11.5px; width:210px; text-align:right; color:var(--text-muted); flex-shrink:0; line-height:1.45; }
+  .p-count .seg { white-space:nowrap; }
+  .p-legend { display:flex; gap:16px; margin-top:8px; font-size:11px; color:var(--text-secondary); }
+  .p-legend span { display:flex; align-items:center; gap:5px; }
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+  .hist-card .title { font-size:13.5px; font-weight:600; margin:0 0 14px; }
+  .legend { display:flex; gap:16px; margin-top:8px; font-size:11px; color:var(--text-secondary); flex-wrap:wrap; }
+  .legend span { display:flex; align-items:center; gap:5px; }
+  .line-swatch { width:14px; height:2px; display:inline-block; }
+  .line-swatch.dashed { width:14px; height:0; background:none; border-top:2px dashed; }
+  svg text { font-family:'Montserrat',sans-serif; }
+  svg circle[data-tip] { transition:r 120ms ease; cursor:default; }
+  svg circle[data-tip]:hover { r:4.5; }
+  svg rect[data-tip] { transition:opacity 120ms ease; cursor:default; }
+  svg rect[data-tip]:hover { opacity:0.78; }
+
+  .chart-tip {
+    position:fixed; pointer-events:none; z-index:1000;
+    background:var(--text-primary); color:#fff; font-size:11px; font-weight:500;
+    padding:5px 9px; border-radius:6px; white-space:nowrap;
+    transform:translate(-50%, -100%); margin-top:-8px;
+  }
+
+  #view-historico { display:none; }
+
+  @media (max-width:860px) {
+    .summary-grid, .summary-grid.cols-3 { grid-template-columns:1fr 1fr; }
+    .seg-grid { grid-template-columns:1fr; }
+  }
+
 </style>
 </head>
 <body>
-  <div class="box">
-    <h1>Painel de Pré-vendas</h1>
-    <p>Ainda sem dados publicados — a primeira geração do painel aparece aqui.</p>
+<div class="wrap">
+
+  <div class="app-header">
+    <div style="display:flex; align-items:flex-end; gap:10px;">
+      <span style="font-weight:900; font-size:22px; letter-spacing:-0.02em;">investPass</span>
+      <span style="width:1.5px; height:22px; background:var(--text-muted);"></span>
+      <h1 style="display:inline; font-size:22px; font-weight:500; margin:0; line-height:22px;">Painel de Pré-Vendas</h1>
+    </div>
+    <span class="updated">última atualização: 02/09/2026 23:07</span>
   </div>
+
+  <div class="top-bar">
+    <div class="tabs">
+      <button class="tab active" data-tab="mensal" onclick="switchTab('mensal')">Detalhe mensal</button>
+      <button class="tab" data-tab="historico" onclick="switchTab('historico')">Histórico</button>
+    </div>
+    <select id="month-filter" onchange="renderMonth(this.value)">
+      <option value="2026-01">Janeiro 2026</option><option value="2026-02">Fevereiro 2026</option><option value="2026-03">Março 2026</option><option value="2026-04">Abril 2026</option><option value="2026-05">Maio 2026</option><option value="2026-06">Junho 2026</option><option value="2026-07">Julho 2026</option><option value="2026-08">Agosto 2026</option><option value="2026-09" selected>Setembro 2026</option>
+    </select>
+  </div>
+
+  <div id="view-mensal">
+    <div class="header-row">
+      <span class="mtd-line" id="m-mtdline"></span>
+    </div>
+
+    <div class="card">
+      <div class="hero-top">
+        <div>
+          <p class="hero-label">Agendamentos realizados com envolvimento de pré-vendas</p>
+          <div class="hero-number">
+            <span class="big" id="m-hero-big"></span>
+            <span class="badge" id="m-badge"></span>
+          </div>
+        </div>
+        <div class="proj-box" id="m-proj-box">
+          <p class="p-label" id="m-proj-label">Projeção final do mês</p>
+          <p class="p-value" id="m-proj-value"></p>
+          <p class="p-sub" id="m-proj-sub"></p>
+        </div>
+      </div>
+      <div class="bar-outer">
+        <div class="bar-fill" id="m-bar-fill"></div>
+        <div class="bar-fill-ar" id="m-bar-fill-ar"></div>
+        <div class="bar-marker" id="m-bar-marker"><span class="m-label" id="m-bar-marker-label"></span></div>
+      </div>
+    </div>
+
+    <div class="summary-grid" id="m-summary-grid">
+      <div class="card metric-card" id="m-card-ar-wrap">
+        <p class="label">Agendamentos à realizar no mês</p>
+        <div class="value-row"><p class="value" id="m-card-ar"></p></div>
+        <p class="sub" id="m-card-ar-sub"></p>
+      </div>
+      <div class="card metric-card">
+        <p class="label">No-show (meta 10%)</p>
+        <div class="twin">
+          <div><p class="value" id="m-ns-total"></p><p class="sub">total</p></div>
+          <div><p class="value" id="m-ns-pv"></p><p class="sub">pré-vendas</p></div>
+        </div>
+      </div>
+      <div class="card metric-card">
+        <p class="label">Total de agendamentos (canais próprios)</p>
+        <div class="value-row"><p class="value" id="m-card-propria"></p></div>
+        <p class="sub" id="m-card-propria-sub"></p>
+      </div>
+      <div class="card metric-card">
+        <p class="label">Total de agendamentos (canais próprios + externos)</p>
+        <div class="value-row"><p class="value" id="m-card-total"></p></div>
+        <p class="sub" id="m-card-total-sub"></p>
+      </div>
+    </div>
+
+    <div class="seg-grid">
+      <div class="card seg-card">
+        <p class="title">🌱 Origem do lead</p>
+        <div id="m-origem"></div>
+        <div class="p-legend" id="m-origem-legend">
+          <span><span class="dot" style="background:var(--g-dark);"></span>realizadas</span>
+          <span><span class="dot" style="background:var(--g-mid);"></span>a realizar</span>
+          <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>no-show</span>
+        </div>
+      </div>
+      <div class="card seg-card">
+        <p class="title">📲 Canal de agendamento</p>
+        <div id="m-canal"></div>
+        <div class="p-legend" id="m-canal-legend">
+          <span><span class="dot" style="background:var(--g-dark);"></span>realizadas</span>
+          <span><span class="dot" style="background:var(--g-mid);"></span>a realizar</span>
+          <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>no-show</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card week-card"><p class="title" id="m-week-title"></p><div id="m-week-body"></div></div>
+
+    <div class="card people-card">
+      <p class="title">Por pessoa</p>
+      <div id="m-pessoa"></div>
+      <div class="p-legend">
+        <span><span class="dot" style="background:var(--g-dark);"></span>realizadas</span>
+        <span><span class="dot" style="background:var(--g-mid);"></span>a realizar</span>
+        <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>no-show</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-historico">
+    <div class="card hist-card">
+      <p class="title">Taxa de no-show MoM</p>
+      <div id="chart-noshow"></div>
+      <div class="legend">
+        <span><span class="line-swatch" style="background:var(--text-secondary);"></span>No-show total</span>
+        <span><span class="line-swatch" style="background:var(--g-dark);"></span>No-show pré-vendas</span>
+        <span><span class="line-swatch dashed" style="border-top-color:#c9a29c;"></span>meta de no-show: 10%</span>
+      </div>
+    </div>
+    <div class="card hist-card">
+      <p class="title">Performance de pré-vendas MoM</p>
+      <div id="chart-meta"></div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--g-dark);"></span>Agendado pela pré-vendas</span>
+        <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>Sem envolvimento de pré-vendas</span>
+        <span><span class="line-swatch dashed" style="border-top-color:#a9a89f;"></span><span id="chart-meta-goal-legend"></span></span>
+      </div>
+    </div>
+    <div class="card hist-card">
+      <p class="title">Performance por Origem MoM</p>
+      <div id="chart-origem"></div>
+      <div class="legend" id="chart-origem-legend"></div>
+    </div>
+    <div class="card hist-card">
+      <p class="title">Performance por Canal MoM</p>
+      <div id="chart-canal"></div>
+      <div class="legend" id="chart-canal-legend"></div>
+    </div>
+    <div class="card hist-card">
+      <p class="title">Performance por Pessoa MoM</p>
+      <div id="chart-pessoa"></div>
+      <div class="legend" id="chart-pessoa-legend"></div>
+    </div>
+  </div>
+
+</div>
+<div id="chart-tip" class="chart-tip" hidden></div>
+<script>
+const MONTHS = {"2026-01": {"label": "Janeiro 2026", "closed": true, "meta": 20, "prevendasReal": 18, "pvNoshow": 3, "pvArealizar": 0, "ns": {"total": 14, "pv": 14}, "presalesRealTotal": 18, "totalReal": 18, "totalNs": 3, "totalAr": 0, "propriaRealTotal": 18, "propriaNs": 3, "propriaAr": 0, "externaAr": 0, "origemDisponivel": false, "canalDisponivel": false, "origem": {"CANAIS PRÓPRIOS": [], "CANAIS EXTERNOS": []}, "canal": [], "pessoa": [["Vini", 18, 0, 3]], "mtdLine": "Mês encerrado", "allCalls": [["06/01", "Solfarma", "—", "—", "Vini", false], ["07/01", "MATH Group", "—", "—", "Vini", false], ["07/01", "Helio Energias", "—", "—", "Vini", true], ["09/01", "Lojas Koerich", "—", "—", "Vini", false], ["12/01", "Forma Turismo", "—", "—", "Vini", false], ["13/01", "Ollie", "—", "—", "Vini", false], ["14/01", "Aarin", "—", "—", "Vini", false], ["15/01", "MePoupe", "—", "—", "Vini", false], ["15/01", "CloudWalk", "—", "—", "Vini", false], ["20/01", "VBET", "—", "—", "Vini", false], ["21/01", "FSB Holding", "—", "—", "Vini", false], ["22/01", "Farmácia Bio Estar", "—", "—", "Vini", false], ["26/01", "Hinode", "—", "—", "Vini", false], ["26/01", "Grupo Guidoni", "—", "—", "Vini", false], ["27/01", "CoE Votorantim", "—", "—", "Vini", false], ["28/01", "Grupo DPSP", "—", "—", "Vini", false], ["28/01", "Cora", "—", "—", "Vini", false], ["29/01", "MaisMu", "—", "—", "Vini", true], ["29/01", "Nelogica", "—", "—", "Vini", false], ["30/01", "Exed Consulting", "—", "—", "Vini", true], ["30/01", "LivUp", "—", "—", "Vini", false]]}, "2026-02": {"label": "Fevereiro 2026", "closed": true, "meta": 20, "prevendasReal": 28, "pvNoshow": 4, "pvArealizar": 0, "ns": {"total": 12, "pv": 12}, "presalesRealTotal": 28, "totalReal": 28, "totalNs": 4, "totalAr": 0, "propriaRealTotal": 28, "propriaNs": 4, "propriaAr": 0, "externaAr": 0, "origemDisponivel": false, "canalDisponivel": false, "origem": {"CANAIS PRÓPRIOS": [], "CANAIS EXTERNOS": []}, "canal": [], "pessoa": [["Vini", 28, 0, 4]], "mtdLine": "Mês encerrado", "allCalls": [["—", "Intera", "—", "—", "Vini", false], ["—", "Rede Montagens", "—", "—", "Vini", false], ["—", "Claro", "—", "—", "Vini", false], ["—", "Kokku", "—", "—", "Vini", false], ["—", "Rock In Rio", "—", "—", "Vini", false], ["—", "Kanastra", "—", "—", "Vini", false], ["—", "Grupo Automec", "—", "—", "Vini", true], ["—", "Reclame Aqui", "—", "—", "Vini", false], ["—", "Grupo Alun", "—", "—", "Vini", false], ["—", "NetLex", "—", "—", "Vini", false], ["—", "Jusbrasil", "—", "—", "Vini", false], ["—", "Solinftec", "—", "—", "Vini", false], ["—", "EXA", "—", "—", "Vini", false], ["—", "Enauta/Brava", "—", "—", "Vini", false], ["—", "Indisa", "—", "—", "Vini", true], ["—", "Lacerda Diniz Machado", "—", "—", "Vini", false], ["—", "Motorista PX", "—", "—", "Vini", false], ["—", "CCEE", "—", "—", "Vini", false], ["—", "Grupo Exalt", "—", "—", "Vini", false], ["—", "Grupo Trigo", "—", "—", "Vini", false], ["—", "The Coffe", "—", "—", "Vini", true], ["—", "Cayena", "—", "—", "Vini", false], ["—", "Tembici", "—", "—", "Vini", true], ["—", "EcxPay", "—", "—", "Vini", false], ["—", "Overlabs", "—", "—", "Vini", false], ["—", "Turbi", "—", "—", "Vini", false], ["—", "Grupo Matos", "—", "—", "Vini", false], ["—", "Biotrop", "—", "—", "Vini", false], ["—", "VTEX", "—", "—", "Vini", false], ["—", "Cortex", "—", "—", "Vini", false], ["—", "Intelipost", "—", "—", "Vini", false], ["—", "Nomad", "—", "—", "Vini", false]]}, "2026-03": {"label": "Março 2026", "closed": true, "meta": 20, "prevendasReal": 22, "pvNoshow": 1, "pvArealizar": 0, "ns": {"total": 4, "pv": 4}, "presalesRealTotal": 22, "totalReal": 22, "totalNs": 1, "totalAr": 0, "propriaRealTotal": 22, "propriaNs": 1, "propriaAr": 0, "externaAr": 0, "origemDisponivel": false, "canalDisponivel": false, "origem": {"CANAIS PRÓPRIOS": [], "CANAIS EXTERNOS": []}, "canal": [], "pessoa": [["Vini", 22, 0, 1]], "mtdLine": "Mês encerrado", "allCalls": [["—", "Madeira Madeira", "—", "—", "Vini", false], ["—", "Francal", "—", "—", "Vini", true], ["—", "Softplan", "—", "—", "Vini", false], ["—", "Peers", "—", "—", "Vini", false], ["—", "iSystems", "—", "—", "Vini", false], ["—", "Bankme", "—", "—", "Vini", false], ["—", "Ambiental Limpeza Urbana", "—", "—", "Vini", false], ["—", "Touti Cosmetics", "—", "—", "Vini", false], ["—", "Pmweb", "—", "—", "Vini", false], ["—", "Pluxee", "—", "—", "Vini", false], ["—", "Vitru", "—", "—", "Vini", false], ["—", "Way2 Tech", "—", "—", "Vini", false], ["—", "Blip", "—", "—", "Vini", false], ["—", "MB", "—", "—", "Vini", false], ["—", "Frota 162", "—", "—", "Vini", false], ["—", "Bioenergética", "—", "—", "Vini", false], ["—", "Certta", "—", "—", "Vini", false], ["—", "Impulso", "—", "—", "Vini", false], ["—", "TMG", "—", "—", "Vini", false], ["—", "Consiglog", "—", "—", "Vini", false], ["—", "Tecnologia Unica", "—", "—", "Vini", false], ["—", "CCM", "—", "—", "Vini", false], ["—", "UDS", "—", "—", "Vini", false]]}, "2026-04": {"label": "Abril 2026", "closed": true, "meta": 20, "prevendasReal": 17, "pvNoshow": 5, "pvArealizar": 0, "ns": {"total": 20, "pv": 23}, "presalesRealTotal": 17, "totalReal": 33, "totalNs": 8, "totalAr": 0, "propriaRealTotal": 23, "propriaNs": 6, "propriaAr": 0, "externaAr": 0, "origemDisponivel": true, "canalDisponivel": false, "origem": {"CANAIS PRÓPRIOS": [["LinkedIn Vini", 12, 0, 1], ["LinkedIn Seixas", 8, 0, 3], ["Reengaja", 2, 0, 0], ["LinkedIn Raolho", 0, 0, 2], ["Landing Page", 1, 0, 0]], "CANAIS EXTERNOS": [["Indicação Externa", 10, 0, 2]]}, "canal": [], "pessoa": [["Vini", 17, 0, 5], ["Raolho", 10, 0, 2], ["Xande", 6, 0, 1]], "mtdLine": "Mês encerrado", "allCalls": [["—", "Liberfly", "Indicação Externa", "—", "Raolho", true], ["—", "Hotmart", "LinkedIn Seixas", "—", "Xande", false], ["—", "CCM", "LinkedIn Seixas", "—", "Vini", false], ["—", "Zucchi Stones", "Indicação Externa", "—", "Raolho", true], ["—", "Toledo do Brasil", "Landing Page", "—", "Vini", false], ["—", "Zeiss", "Indicação Externa", "—", "Raolho", false], ["—", "Fortbras", "Indicação Externa", "—", "Raolho", false], ["—", "Qive", "Reengaja", "—", "Vini", false], ["—", "Sellbie", "LinkedIn Vini", "—", "Vini", false], ["—", "Eskolare", "LinkedIn Vini", "—", "Vini", false], ["—", "GeoBio", "LinkedIn Vini", "—", "Vini", false], ["—", "Uncover", "LinkedIn Vini", "—", "Vini", false], ["—", "Rede Apice", "LinkedIn Vini", "—", "Vini", false], ["—", "Pipefy", "LinkedIn Seixas", "—", "Vini", false], ["—", "Cobeb", "LinkedIn Vini", "—", "Vini", false], ["—", "Fundação SF Xavier", "Indicação Externa", "—", "Raolho", false], ["—", "Schulz", "Indicação Externa", "—", "Raolho", false], ["—", "Nordill", "Indicação Externa", "—", "Raolho", false], ["—", "Ambipar", "Indicação Externa", "—", "Raolho", false], ["—", "CVPAR", "LinkedIn Vini", "—", "Vini", false], ["—", "Rock in Rio", "LinkedIn Vini", "—", "Vini", false], ["—", "Nice Group", "Indicação Externa", "—", "Raolho", false], ["—", "Precisao Sistemas", "LinkedIn Vini", "—", "Vini", false], ["—", "iMile Delivery", "LinkedIn Seixas", "—", "Vini", true], ["—", "Frete Rápido", "Reengaja", "—", "Vini", false], ["—", "Chiquinho Sorvetes", "Indicação Externa", "—", "Raolho", false], ["—", "Belgo", "LinkedIn Seixas", "—", "Xande", false], ["—", "HMV", "LinkedIn Seixas", "—", "Xande", false], ["—", "Cortex", "LinkedIn Raolho", "—", "Vini", true], ["—", "Arqia", "LinkedIn Vini", "—", "Vini", false], ["—", "Mater Dei", "LinkedIn Seixas", "—", "Xande", false], ["—", "XP", "LinkedIn Seixas", "—", "Xande", false], ["—", "FindUp", "LinkedIn Vini", "—", "Vini", false], ["—", "Millpar", "LinkedIn Raolho", "—", "Vini", true], ["—", "Galucci", "LinkedIn Seixas", "—", "Vini", true], ["—", "Grupo Azzon", "Indicação Externa", "—", "Raolho", false], ["—", "GrupoSC", "LinkedIn Seixas", "—", "Xande", true], ["—", "green4T", "LinkedIn Seixas", "—", "Xande", false], ["—", "Massari", "LinkedIn Vini", "—", "Vini", false], ["—", "Platform Science", "LinkedIn Vini", "—", "Vini", true], ["—", "Grupo Vizcay", "Indicação Externa", "—", "Raolho", false]]}, "2026-05": {"label": "Maio 2026", "closed": true, "meta": 20, "prevendasReal": 16, "pvNoshow": 5, "pvArealizar": 0, "ns": {"total": 27, "pv": 24}, "presalesRealTotal": 16, "totalReal": 27, "totalNs": 10, "totalAr": 0, "propriaRealTotal": 19, "propriaNs": 8, "propriaAr": 0, "externaAr": 0, "origemDisponivel": true, "canalDisponivel": false, "origem": {"CANAIS PRÓPRIOS": [["LinkedIn Seixas", 9, 0, 5], ["LinkedIn Vini", 4, 0, 3], ["LinkedIn Raolho", 4, 0, 0], ["Landing Page", 2, 0, 0]], "CANAIS EXTERNOS": [["Indicação Externa", 8, 0, 2]]}, "canal": [], "pessoa": [["Vini", 16, 0, 5], ["Raolho", 10, 0, 2], ["Xande", 1, 0, 3]], "mtdLine": "Mês encerrado", "allCalls": [["05/05", "Millpar", "LinkedIn Raolho", "—", "Vini", false], ["06/05", "Socicam", "LinkedIn Seixas", "—", "Xande", true], ["06/05", "Simpress", "LinkedIn Seixas", "—", "Vini", false], ["07/05", "Seventh", "LinkedIn Vini", "—", "Vini", false], ["07/05", "Adidas", "Indicação Externa", "—", "Raolho", false], ["07/05", "Old Dutch Barbearia", "Indicação Externa", "—", "Raolho", false], ["11/05", "dr.consulta", "LinkedIn Seixas", "—", "Vini", true], ["11/05", "Grupo SC", "LinkedIn Seixas", "—", "Vini", false], ["11/05", "Fibracem", "LinkedIn Vini", "—", "Vini", true], ["12/05", "Platform Science", "LinkedIn Vini", "—", "Vini", true], ["12/05", "Cibra", "LinkedIn Vini", "—", "Vini", false], ["12/05", "Multilog", "LinkedIn Seixas", "—", "Xande", true], ["13/05", "Tegma Logística", "Indicação Externa", "—", "Raolho", false], ["13/05", "JBS", "Indicação Externa", "—", "Raolho", false], ["14/05", "Viveo", "LinkedIn Seixas", "—", "Vini", false], ["14/05", "Informatec Serviços em RH", "LinkedIn Vini", "—", "Vini", false], ["14/05", "Cortex", "LinkedIn Raolho", "—", "Vini", false], ["15/05", "TROX do Brasil", "LinkedIn Vini", "—", "Vini", false], ["15/05", "Libbs Farmaceutica", "Indicação Externa", "—", "Raolho", false], ["18/05", "Impress Decor Brasil", "Indicação Externa", "—", "Raolho", false], ["19/05", "Wilsonsons", "LinkedIn Seixas", "—", "Vini", false], ["19/05", "Omni", "LinkedIn Vini", "—", "Vini", true], ["19/05", "Alert Brasil", "Indicação Externa", "—", "Raolho", true], ["19/05", "MedQuímica", "LinkedIn Seixas", "—", "Xande", false], ["19/05", "Porto Seguro", "LinkedIn Seixas", "—", "Xande", true], ["19/05", "Haco", "LinkedIn Raolho", "—", "Vini", false], ["19/05", "Votorantim Cimentos", "LinkedIn Seixas", "—", "Vini", false], ["20/05", "John Deere Brasil", "Indicação Externa", "—", "Raolho", false], ["21/05", "Orizon", "LinkedIn Seixas", "—", "Vini", false], ["21/05", "Evolua Energia", "Landing Page", "—", "Raolho", false], ["21/05", "AGP", "Indicação Externa", "—", "Raolho", false], ["26/05", "Pernambucanas", "LinkedIn Seixas", "—", "Vini", false], ["27/05", "Aviva", "LinkedIn Seixas", "—", "Vini", false], ["27/05", "Selpe Gente e Gestão", "LinkedIn Raolho", "—", "Vini", false], ["27/05", "Casa dos Ventos", "Landing Page", "—", "Raolho", false], ["28/05", "BrasPine", "LinkedIn Seixas", "—", "Vini", true], ["28/05", "Grupo Pereira", "Indicação Externa", "—", "Raolho", true]]}, "2026-06": {"label": "Junho 2026", "closed": true, "meta": 20, "prevendasReal": 12, "pvNoshow": 5, "pvArealizar": 0, "ns": {"total": 26, "pv": 29}, "presalesRealTotal": 12, "totalReal": 28, "totalNs": 10, "totalAr": 0, "propriaRealTotal": 16, "propriaNs": 4, "propriaAr": 0, "externaAr": 0, "origemDisponivel": true, "canalDisponivel": false, "origem": {"CANAIS PRÓPRIOS": [["LinkedIn Seixas", 5, 0, 3], ["LinkedIn Vini", 6, 0, 0], ["LinkedIn Raolho", 3, 0, 1], ["Landing Page", 1, 0, 0], ["Reengaja", 1, 0, 0]], "CANAIS EXTERNOS": [["Indicação Externa", 12, 0, 5], ["Flash", 0, 0, 1]]}, "canal": [], "pessoa": [["Raolho", 13, 0, 5], ["Vini", 12, 0, 5], ["Xande", 3, 0, 0]], "mtdLine": "Mês encerrado", "allCalls": [["01/06", "SWM Internacional", "Indicação Externa", "—", "Raolho", false], ["01/06", "CarPark", "Indicação Externa", "—", "Raolho", true], ["02/06", "Grupo Piracanjuba", "Indicação Externa", "—", "Raolho", false], ["02/06", "Evolua Energia", "Landing Page", "—", "Raolho", false], ["02/06", "Commcenter", "Indicação Externa", "—", "Raolho", false], ["02/06", "ArcelorMittal", "Indicação Externa", "—", "Raolho", true], ["03/06", "Alpha Fitness", "Indicação Externa", "—", "Raolho", false], ["03/06", "Fóton Informática", "Indicação Externa", "—", "Raolho", false], ["05/06", "Gestão SAT", "Indicação Externa", "—", "Raolho", true], ["09/06", "Siatt Engenharia", "LinkedIn Raolho", "—", "Vini", false], ["10/06", "Honda", "LinkedIn Seixas", "—", "Vini", false], ["10/06", "Tahto", "LinkedIn Seixas", "—", "Xande", false], ["10/06", "Companhia das Letras", "LinkedIn Seixas", "—", "Vini", true], ["11/06", "Avantis Group", "Indicação Externa", "—", "Raolho", true], ["12/06", "Arke Energia", "Indicação Externa", "—", "Raolho", false], ["12/06", "V4 Company", "LinkedIn Seixas", "—", "Vini", true], ["15/06", "Brasa English Course", "Indicação Externa", "—", "Raolho", false], ["15/06", "Cia Tradicional de Comércio", "Indicação Externa", "—", "Raolho", false], ["15/06", "Lojacorr", "LinkedIn Raolho", "—", "Vini", false], ["15/06", "Meta Brindes", "Flash", "—", "Vini", true], ["16/06", "Robustus", "Indicação Externa", "—", "Raolho", false], ["16/06", "Objective", "Reengaja", "—", "Xande", false], ["16/06", "JSL", "Indicação Externa", "—", "Raolho", false], ["16/06", "TARRAF", "LinkedIn Seixas", "—", "Vini", true], ["18/06", "Grupo Muffato", "LinkedIn Seixas", "—", "Vini", false], ["18/06", "Grupo Trama Reputale", "LinkedIn Vini", "—", "Vini", false], ["18/06", "Libbs", "LinkedIn Seixas", "—", "Vini", false], ["18/06", "Azzas 2154", "LinkedIn Seixas", "—", "Xande", false], ["19/06", "Zupp", "LinkedIn Vini", "—", "Vini", false], ["23/06", "RHopen Consultoria", "LinkedIn Vini", "—", "Vini", false], ["24/06", "Empresas Revemar", "Indicação Externa", "—", "Raolho", false], ["25/06", "A.C.Camargo", "LinkedIn Raolho", "—", "Vini", true], ["25/06", "Atento", "Indicação Externa", "—", "Raolho", true], ["26/06", "ConectCar", "LinkedIn Vini", "—", "Vini", false], ["26/06", "Tintas Verginia", "Indicação Externa", "—", "Raolho", false], ["29/06", "Platform Science", "LinkedIn Vini", "—", "Vini", false], ["29/06", "MKT House", "LinkedIn Vini", "—", "Vini", false], ["30/06", "brio incorporadora", "LinkedIn Raolho", "—", "Vini", false]]}, "2026-07": {"label": "Julho 2026", "closed": true, "meta": 20, "prevendasReal": 11, "pvNoshow": 4, "pvArealizar": 0, "ns": {"total": 23, "pv": 27}, "presalesRealTotal": 11, "totalReal": 23, "totalNs": 7, "totalAr": 0, "propriaRealTotal": 11, "propriaNs": 4, "propriaAr": 0, "externaAr": 0, "origemDisponivel": true, "canalDisponivel": true, "origem": {"CANAIS PRÓPRIOS": [["Lista Fria", 4, 0, 3], ["LinkedIn Seixas", 3, 0, 1], ["LinkedIn Vini", 3, 0, 0], ["Landing Page", 1, 0, 0]], "CANAIS EXTERNOS": [["Indicação Externa", 12, 0, 3]]}, "canal": [["Associados", 11, 0, 3], ["Ligação", 6, 0, 4], ["LinkedIn", 4, 0, 0], ["Referral", 1, 0, 0], ["WhatsApp", 1, 0, 0]], "pessoa": [["Vini", 11, 0, 4], ["Raolho", 11, 0, 3], ["Seixas", 1, 0, 0]], "mtdLine": "Mês encerrado", "allCalls": [["01/07", "Grupo Piracanjuba", "LinkedIn Seixas", "LinkedIn", "Vini", false], ["01/07", "Celcoin", "LinkedIn Vini", "LinkedIn", "Vini", false], ["01/07", "Avantia", "LinkedIn Vini", "LinkedIn", "Vini", false], ["06/07", "Inmetrics", "Lista Fria", "Ligação", "Vini", false], ["07/07", "Elera Renováveis", "Lista Fria", "Ligação", "Vini", true], ["13/07", "Lab. Pierre Fabre", "Indicação Externa", "Associados", "Raolho", false], ["14/07", "C6 Bank", "Lista Fria", "Ligação", "Vini", true], ["15/07", "Vila Trampolim Park", "Lista Fria", "Ligação", "Vini", true], ["15/07", "Keeta", "Indicação Externa", "Associados", "Raolho", false], ["15/07", "Escritório Torres", "Indicação Externa", "Associados", "Raolho", false], ["15/07", "PinPag", "Indicação Externa", "Referral", "Seixas", false], ["16/07", "Marisa", "LinkedIn Seixas", "Ligação", "Vini", false], ["16/07", "Terra Premium", "Indicação Externa", "Associados", "Raolho", true], ["17/07", "DUX Company", "Lista Fria", "Ligação", "Vini", false], ["17/07", "Principia", "LinkedIn Seixas", "Ligação", "Vini", true], ["17/07", "Ourofino Saúde Animal", "Landing Page", "WhatsApp", "Vini", false], ["17/07", "Alupar", "Indicação Externa", "Associados", "Raolho", false], ["20/07", "Delfia", "Lista Fria", "Ligação", "Vini", false], ["21/07", "Deal", "Lista Fria", "Ligação", "Vini", false], ["21/07", "Grupo Formigres", "Indicação Externa", "Associados", "Raolho", false], ["21/07", "CEJAM", "Indicação Externa", "Associados", "Raolho", false], ["22/07", "Campari Group", "Indicação Externa", "Associados", "Raolho", false], ["23/07", "Clicksign", "Indicação Externa", "Associados", "Raolho", false], ["23/07", "Gestão SAT", "Indicação Externa", "Associados", "Raolho", false], ["23/07", "Elsys", "LinkedIn Vini", "LinkedIn", "Vini", false], ["23/07", "JBS", "Indicação Externa", "Associados", "Raolho", false], ["24/07", "WAYON IT Solutions", "LinkedIn Seixas", "Ligação", "Vini", false], ["30/07", "RL Higiene", "Indicação Externa", "Associados", "Raolho", true], ["30/07", "Ingram Micro Brasil", "Indicação Externa", "Associados", "Raolho", false], ["30/07", "Grupo Bimbo", "Indicação Externa", "Associados", "Raolho", true]]}, "2026-08": {"label": "Agosto 2026", "closed": true, "meta": 20, "prevendasReal": 19, "pvNoshow": 5, "pvArealizar": 0, "ns": {"total": 14, "pv": 21}, "presalesRealTotal": 19, "totalReal": 48, "totalNs": 8, "totalAr": 0, "propriaRealTotal": 19, "propriaNs": 4, "propriaAr": 0, "externaAr": 0, "origemDisponivel": true, "canalDisponivel": true, "origem": {"CANAIS PRÓPRIOS": [["CONARH", 5, 0, 2], ["LinkedIn Vini", 5, 0, 0], ["LinkedIn Raolho", 4, 0, 0], ["LinkedIn Seixas", 2, 0, 1], ["Lista Fria", 2, 0, 1], ["Landing Page", 1, 0, 0]], "CANAIS EXTERNOS": [["Indicação Externa", 28, 0, 2], ["Embaixadores", 0, 0, 2], ["Flash", 1, 0, 0]]}, "canal": [["Associados", 28, 0, 2], ["Ligação", 9, 0, 3], ["Email", 5, 0, 1], ["WhatsApp", 4, 0, 1], ["LinkedIn", 2, 0, 0], ["Embaixadores", 0, 0, 1]], "pessoa": [["Raolho", 29, 0, 2], ["Vini", 19, 0, 5], ["Xande", 0, 0, 1]], "mtdLine": "Mês encerrado", "allCalls": [["04/08", "Grupo Bimbo", "Indicação Externa", "Associados", "Raolho", false], ["04/08", "Transpanorama", "Indicação Externa", "Associados", "Raolho", false], ["04/08", "Grupo Servopa", "LinkedIn Seixas", "Ligação", "Vini", false], ["05/08", "Kynetec", "Indicação Externa", "Associados", "Raolho", false], ["05/08", "Renault", "Indicação Externa", "Associados", "Raolho", false], ["06/08", "FQM", "Indicação Externa", "Associados", "Raolho", false], ["06/08", "PetroReconcavo", "LinkedIn Raolho", "Email", "Vini", false], ["06/08", "Carbel Auto Group", "LinkedIn Seixas", "Ligação", "Vini", true], ["10/08", "Fundação Butantan", "Indicação Externa", "Associados", "Raolho", false], ["11/08", "OAB Pernambuco", "Indicação Externa", "Associados", "Raolho", false], ["12/08", "Mextra Metais", "Embaixadores", "Embaixadores", "Xande", true], ["12/08", "Grupo Pereira", "Indicação Externa", "Associados", "Raolho", false], ["12/08", "Otis", "Indicação Externa", "Associados", "Raolho", false], ["12/08", "Alstom Group", "Indicação Externa", "Associados", "Raolho", false], ["12/08", "Grupo Rioto", "Landing Page", "Ligação", "Vini", false], ["12/08", "Resolv", "Indicação Externa", "Associados", "Raolho", false], ["13/08", "Comerc Energia", "Indicação Externa", "Associados", "Raolho", false], ["13/08", "SBCD Saúde", "Indicação Externa", "Associados", "Raolho", true], ["13/08", "Lactalis Brasil", "Indicação Externa", "Associados", "Raolho", false], ["13/08", "Evolua Energia", "Indicação Externa", "Associados", "Raolho", false], ["13/08", "AFDatalink", "Indicação Externa", "Associados", "Raolho", false], ["14/08", "Sertran Transportes", "LinkedIn Raolho", "LinkedIn", "Vini", false], ["14/08", "Icon Solutions", "LinkedIn Vini", "Ligação", "Vini", false], ["14/08", "Moderna Tecnologia", "LinkedIn Raolho", "WhatsApp", "Vini", false], ["14/08", "Soffner Tecnologia", "Indicação Externa", "Associados", "Raolho", false], ["17/08", "Celesc", "Indicação Externa", "Associados", "Raolho", false], ["17/08", "Camil", "Indicação Externa", "Associados", "Raolho", false], ["18/08", "ArcelorMittal", "Indicação Externa", "Associados", "Raolho", false], ["19/08", "G4 Educação", "Indicação Externa", "Associados", "Raolho", false], ["21/08", "A.C.Camargo", "LinkedIn Vini", "Email", "Vini", false], ["24/08", "Wobben Windpower", "LinkedIn Vini", "Ligação", "Vini", false], ["24/08", "SiDi", "Lista Fria", "Email", "Vini", false], ["25/08", "Capgemini", "Indicação Externa", "Associados", "Raolho", false], ["25/08", "Informa Markets", "LinkedIn Vini", "Ligação", "Vini", false], ["25/08", "Boca Rosa Company", "Lista Fria", "Email", "Vini", false], ["25/08", "Ticket/Edenred", "CONARH", "WhatsApp", "Vini", false], ["25/08", "Danone", "Indicação Externa", "Associados", "Raolho", false], ["25/08", "Grupo Argenta", "Indicação Externa", "Associados", "Raolho", false], ["25/08", "Consórcio Tradição", "Indicação Externa", "Associados", "Raolho", true], ["26/08", "Ploomes", "Indicação Externa", "Associados", "Raolho", false], ["26/08", "Lightwall", "Indicação Externa", "Associados", "Raolho", false], ["27/08", "Fox Human Capital", "LinkedIn Raolho", "Ligação", "Vini", false], ["27/08", "LG Lugar de Gente", "LinkedIn Vini", "Ligação", "Vini", false], ["27/08", "Dr. Ocupacional", "Indicação Externa", "Associados", "Raolho", false], ["27/08", "Samsung Eletrônicos", "Indicação Externa", "Associados", "Raolho", false], ["27/08", "Grupo Hub", "LinkedIn Seixas", "Email", "Vini", false], ["27/08", "BenCorp", "CONARH", "WhatsApp", "Vini", false], ["28/08", "Cayro Contabilidade", "Flash", "Ligação", "Vini", false], ["28/08", "Santa Colomba", "Indicação Externa", "Associados", "Raolho", false], ["28/08", "Sistel", "CONARH", "WhatsApp", "Vini", false], ["31/08", "Unimed São Roque", "CONARH", "Ligação", "Vini", false], ["31/08", "Hospital Ophir", "CONARH", "WhatsApp", "Vini", true], ["31/08", "Marsh/Mercer", "CONARH", "LinkedIn", "Raolho", false], ["31/08", "Onfly", "Embaixadores", "Email", "Vini", true], ["31/08", "Company Hero", "Lista Fria", "Ligação", "Vini", true], ["31/08", "GRT Gratiam", "CONARH", "Ligação", "Vini", true]]}, "2026-09": {"label": "Setembro 2026", "closed": false, "meta": 20, "prevendasReal": 1, "pvNoshow": 0, "pvArealizar": 10, "ns": {"total": 17, "pv": 0}, "presalesRealTotal": 1, "totalReal": 5, "totalNs": 1, "totalAr": 29, "propriaRealTotal": 3, "propriaNs": 0, "propriaAr": 23, "externaAr": 6, "origemDisponivel": true, "canalDisponivel": true, "origem": {"CANAIS PRÓPRIOS": [["CONARH", 1, 20, 0], ["LinkedIn Vini", 1, 2, 0], ["LinkedIn Raolho", 1, 0, 0], ["Landing Page", 0, 1, 0]], "CANAIS EXTERNOS": [["Indicação Externa", 2, 5, 1], ["Flash", 0, 1, 0]]}, "canal": [["WhatsApp", 3, 15, 0], ["Associados", 2, 5, 1], ["Ligação", 0, 6, 0], ["Email", 0, 3, 0]], "pessoa": [["Raolho", 4, 13, 1], ["Vini", 1, 10, 0], ["Igor", 0, 4, 0], ["Xande", 0, 2, 0]], "mtdLine": "MTD 01/09 · 1 de 21 dias úteis (até 01/09)", "expected": 0.9523809523809523, "week": {"title": "Pipeline do mês (Setembro/2026) · 29 calls", "calls": [["03/09", "Gelita", "Indicação Externa", "Associados", "Raolho"], ["03/09", "Àster", "Indicação Externa", "Associados", "Raolho"], ["03/09", "RH Brasil", "CONARH", "WhatsApp", "Vini"], ["03/09", "Galucci & Associados", "CONARH", "Ligação", "Vini"], ["03/09", "Equipe CS", "Flash", "WhatsApp", "Vini"], ["03/09", "Perfipar", "CONARH", "Ligação", "Vini"], ["03/09", "Grupo Trigo", "CONARH", "WhatsApp", "Vini"], ["04/09", "Olhar RH", "CONARH", "Email", "Xande"], ["04/09", "Service Kleen", "CONARH", "WhatsApp", "Igor"], ["04/09", "Senac Tocantins", "CONARH", "Ligação", "Vini"], ["07/09", "Confebras", "CONARH", "Ligação", "Vini"], ["09/09", "Valoo Benefícios", "CONARH", "WhatsApp", "Raolho"], ["09/09", "Auren Consultoria", "LinkedIn Vini", "Ligação", "Vini"], ["10/09", "EPL Seguros", "CONARH", "Ligação", "Vini"], ["10/09", "IGS Software", "Landing Page", "WhatsApp", "Raolho"], ["11/09", "Rossi Supermercados", "CONARH", "WhatsApp", "Raolho"], ["11/09", "Credits Brasil", "CONARH", "WhatsApp", "Igor"], ["11/09", "Klabin", "Indicação Externa", "Associados", "Raolho"], ["11/09", "São Martinho", "Indicação Externa", "Associados", "Raolho"], ["14/09", "BNB", "CONARH", "Email", "Xande"], ["14/09", "Sisloc", "CONARH", "WhatsApp", "Raolho"], ["15/09", "Importek", "CONARH", "WhatsApp", "Igor"], ["15/09", "Logística G2L", "CONARH", "WhatsApp", "Raolho"], ["16/09", "Clicksign", "Indicação Externa", "Associados", "Raolho"], ["16/09", "Volvo", "CONARH", "WhatsApp", "Raolho"], ["17/09", "Apex Brasil", "CONARH", "WhatsApp", "Raolho"], ["18/09", "Incomum Viagens", "CONARH", "WhatsApp", "Igor"], ["18/09", "MDS Group", "CONARH", "WhatsApp", "Raolho"], ["21/09", "Panasonic (2)", "LinkedIn Vini", "Email", "Vini"]]}}};
+const HIST_ORDER = ["2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"];
+const DEFAULT_MES = "2026-09";
+
+
+function statusOf(ratio){
+  if (ratio > 0.9) return { css: 'green', label: '🟢' };
+  if (ratio >= 0.7) return { css: 'amber', label: '🟡' };
+  return { css: 'red', label: '🔴' };
+}
+
+function segBar(real, ar, ns){
+  const total = real + ar + ns || 1;
+  return `<div class="ch-track">
+    <div style="width:${real/total*100}%; background:var(--g-dark);"></div>
+    <div style="width:${ar/total*100}%; background:var(--g-mid);"></div>
+    <div style="width:${ns/total*100}%; background:var(--g-pale);"></div>
+  </div>`;
+}
+
+function realizadosSubtext(real, ns, ar){
+  let s = `${real} realizados · ${ns} no-shows`;
+  if (ar > 0) s += ` · +${ar} a realizar`;
+  return s;
+}
+
+function triCountLabel(real, ar, ns, closed){
+  const parts = [`${real} real.`];
+  if (!closed) parts.push(`${ar} a real.`);
+  parts.push(`${ns} no-show`);
+  return parts.map((p, i) => `<span class="seg">${i > 0 ? '| ' : ''}${p}</span>`).join(' ');
+}
+
+function rowsHtml(list, closed){
+  return list.map(([name, real, ar, ns]) => {
+    const total = real + ar + ns;
+    return `<div class="ch-row"><span class="name">${name}</span>${segBar(real, ar, ns)}<span class="ch-count">${total} (${triCountLabel(real, ar, ns, closed)})</span></div>`;
+  }).join('');
+}
+
+function callsTable(rows, withNoShow){
+  const body = rows.map(r => {
+    const [d, empresa, origem, canal, pessoa, ns] = r;
+    return `<tr>
+      <td>${d}</td><td>${empresa}</td><td>${origem}</td><td>${canal}</td><td>${pessoa}</td>
+      <td>${ns ? '<span class="ns-tag">NO-SHOW</span>' : ''}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="calls-table-scroll">
+    <table class="calls-table">
+      <thead><tr><th>Data</th><th>Empresa</th><th>Origem</th><th>Canal</th><th>Agendada por</th><th></th></tr></thead>
+      <tbody>${body || '<tr><td colspan="6" class="week-empty">nenhuma call</td></tr>'}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderMonth(key){
+  const m = MONTHS[key];
+  document.getElementById('month-filter').value = key;
+  document.getElementById('m-mtdline').textContent = m.mtdLine;
+  document.getElementById('m-hero-big').textContent = m.prevendasReal;
+
+  const badge = document.getElementById('m-badge');
+  const projBox = document.getElementById('m-proj-box');
+  let st, expectedForMarker;
+  if (m.closed) {
+    const pct = Math.round((m.prevendasReal / m.meta) * 100);
+    st = statusOf(m.prevendasReal / m.meta);
+    badge.textContent = `${st.label} ${pct}% da meta`;
+  } else {
+    const expected = m.expected || 0;
+    expectedForMarker = expected;
+    const ratio = expected > 0 ? (m.prevendasReal / expected) : (m.prevendasReal === 0 ? 1 : 2);
+    const pct = Math.round(ratio * 100);
+    st = statusOf(ratio);
+    badge.textContent = `${st.label} ${pct}% do MTD (${Math.round(expected)} agendamentos)`;
+  }
+  badge.className = 'badge badge-' + st.css;
+  projBox.className = 'proj-box proj-' + st.css;
+
+  document.getElementById('m-proj-label').textContent = m.closed ? 'Fechamento do mês' : 'Projeção final do mês';
+  document.getElementById('m-proj-value').textContent = `${m.prevendasReal + m.pvArealizar} de ${m.meta}`;
+  document.getElementById('m-proj-sub').textContent = m.closed ? '' : `${m.prevendasReal} realizadas + ${m.pvArealizar} a realizar`;
+
+  const barPct = Math.min(100, (m.prevendasReal / m.meta) * 100);
+  const barFillEl = document.getElementById('m-bar-fill');
+  barFillEl.style.width = barPct + '%';
+  barFillEl.className = 'bar-fill bar-' + st.css;
+  barFillEl.setAttribute('data-tip', `${m.prevendasReal} realizadas`);
+  const barArEl = document.getElementById('m-bar-fill-ar');
+  barArEl.className = 'bar-fill-ar bar-' + st.css;
+  barArEl.setAttribute('data-tip', `${m.pvArealizar} a realizar`);
+  if (m.closed || !m.pvArealizar) {
+    barArEl.style.width = '0%';
+  } else {
+    const arPct = Math.min(100 - barPct, (m.pvArealizar / m.meta) * 100);
+    barArEl.style.left = barPct + '%';
+    barArEl.style.width = arPct + '%';
+  }
+  const marker = document.getElementById('m-bar-marker');
+  if (m.closed) {
+    marker.style.display = 'none';
+  } else {
+    marker.style.display = 'block';
+    marker.style.left = `calc(${(expectedForMarker/m.meta)*100}% - 1px)`;
+    document.getElementById('m-bar-marker-label').textContent = `MTD - ${Math.round(expectedForMarker)}`;
+  }
+
+  document.getElementById('m-card-propria').textContent = m.propriaRealTotal + m.propriaNs + m.propriaAr;
+  document.getElementById('m-card-propria-sub').textContent = realizadosSubtext(m.propriaRealTotal, m.propriaNs, m.propriaAr);
+
+  const grid = document.getElementById('m-summary-grid');
+  const arWrap = document.getElementById('m-card-ar-wrap');
+  if (m.closed) {
+    arWrap.style.display = 'none';
+    grid.classList.add('cols-3');
+  } else {
+    arWrap.style.display = '';
+    grid.classList.remove('cols-3');
+    document.getElementById('m-card-ar').textContent = m.propriaAr + m.externaAr;
+    document.getElementById('m-card-ar-sub').textContent = `${m.propriaAr} canais próprios · ${m.externaAr} externos`;
+  }
+
+  document.getElementById('m-ns-total').textContent = `${m.ns.total}%`;
+  document.getElementById('m-ns-total').className = 'value' + (m.ns.total > 10 ? ' red' : '');
+  document.getElementById('m-ns-pv').textContent = `${m.ns.pv}%`;
+  document.getElementById('m-ns-pv').className = 'value' + (m.ns.pv > 10 ? ' red' : '');
+
+  document.getElementById('m-card-total').textContent = m.totalReal + m.totalNs + m.totalAr;
+  document.getElementById('m-card-total-sub').textContent = realizadosSubtext(m.totalReal, m.totalNs, m.totalAr);
+
+  document.getElementById('m-origem-legend').style.display = m.origemDisponivel ? '' : 'none';
+  if (m.origemDisponivel) {
+    let origemHtml = '';
+    Object.keys(m.origem).forEach(section => {
+      origemHtml += `<p class="seg-section-label">${section}</p>${rowsHtml(m.origem[section], m.closed)}`;
+    });
+    document.getElementById('m-origem').innerHTML = origemHtml;
+  } else {
+    document.getElementById('m-origem').innerHTML = '<p class="week-empty">dado indisponível</p>';
+  }
+
+  document.getElementById('m-canal-legend').style.display = m.canalDisponivel ? '' : 'none';
+  if (m.canalDisponivel) {
+    document.getElementById('m-canal').innerHTML = rowsHtml(m.canal, m.closed);
+  } else {
+    document.getElementById('m-canal').innerHTML = '<p class="week-empty">dado indisponível</p>';
+  }
+
+  if (m.closed) {
+    document.getElementById('m-week-title').textContent = `Todas as calls de ${m.label}`;
+    document.getElementById('m-week-body').innerHTML = callsTable(m.allCalls, true);
+  } else {
+    document.getElementById('m-week-title').textContent = m.week.title;
+    document.getElementById('m-week-body').innerHTML = callsTable(m.week.calls, false);
+  }
+
+  const maxP = Math.max(...m.pessoa.map(p => p[1] + p[2] + p[3]), 1);
+  document.getElementById('m-pessoa').innerHTML = m.pessoa.map(([name, real, ar, ns]) => {
+    const total = real + ar + ns;
+    return `<div class="p-row">
+      <span class="name">${name}</span>
+      <div class="p-track">
+        <div style="width:${real/maxP*100}%; background:var(--g-dark);"></div>
+        <div style="width:${ar/maxP*100}%; background:var(--g-mid);"></div>
+        <div style="width:${ns/maxP*100}%; background:var(--g-pale);"></div>
+      </div>
+      <span class="p-count">${total} (${triCountLabel(real, ar, ns, m.closed)})</span>
+    </div>`;
+  }).join('');
+}
+
+function switchTab(tab){
+  document.getElementById('view-mensal').style.display = tab === 'mensal' ? 'block' : 'none';
+  document.getElementById('view-historico').style.display = tab === 'historico' ? 'block' : 'none';
+  document.getElementById('month-filter').style.display = tab === 'mensal' ? '' : 'none';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  if (tab === 'historico') renderHistorico();
+}
+
+function xPositions(n, xStart, xEnd){
+  if (n === 1) return [(xStart + xEnd) / 2];
+  const step = (xEnd - xStart) / (n - 1);
+  return Array.from({length:n}, (_, i) => xStart + i * step);
+}
+
+function monthTick(m){
+  return `${m.label.split(' ')[0].slice(0,3)}/${m.label.slice(-2)}`;
+}
+
+const CHART_LEFT = 64, CHART_RIGHT = 650, CHART_TOP = 20, CHART_BOTTOM = 150;
+const SERIES_COLORS = ['#3f7a5c','#6b46c1','#c0392b','#c9862a','#2d6f8e','#8a5a3f','#a3335c','#4f7ca8','#5c8a3f','#8a3f7a'];
+
+function niceMax(values, floor){
+  const max = Math.max(...values, floor || 0);
+  return max <= 0 ? (floor || 1) : max * 1.15;
+}
+
+function yTicks(maxVal, count){
+  count = count || 4;
+  return Array.from({length: count}, (_, i) => {
+    const value = maxVal * i / (count - 1);
+    const y = CHART_BOTTOM - (value / maxVal) * (CHART_BOTTOM - CHART_TOP);
+    return { value, y };
+  });
+}
+
+function axisSvg(ticks, fmt){
+  return ticks.map(t => `
+    <line x1="${CHART_LEFT}" y1="${t.y}" x2="${CHART_RIGHT}" y2="${t.y}" stroke="var(--border)" stroke-opacity="0.6" stroke-width="1"/>
+    <text x="${CHART_LEFT-8}" y="${t.y+3}" font-size="9" fill="var(--text-muted)" text-anchor="end">${fmt(t.value)}</text>
+  `).join('');
+}
+
+function refLineSvg(y, color){
+  return `<line x1="${CHART_LEFT}" y1="${y}" x2="${CHART_RIGHT}" y2="${y}" stroke="${color}" stroke-dasharray="4,4" stroke-width="1" opacity="0.7"/>`;
+}
+
+function lineChartSvg({ months, series, maxVal, fmtVal, refLine, openMonthMarker }){
+  const xs = xPositions(months.length, CHART_LEFT+24, CHART_RIGHT-24);
+  const yFor = v => CHART_BOTTOM - (v/maxVal) * (CHART_BOTTOM - CHART_TOP);
+  const n = months.length;
+  const lastOpen = !!openMonthMarker && n > 1 && !months[n-1].closed;
+  let svg = `<svg viewBox="0 0 720 200" width="100%">`;
+  svg += axisSvg(yTicks(maxVal), fmtVal);
+  svg += `<line x1="${CHART_LEFT}" y1="${CHART_BOTTOM}" x2="${CHART_RIGHT}" y2="${CHART_BOTTOM}" stroke="var(--border)"/>`;
+  if (refLine) svg += refLineSvg(yFor(refLine.value), refLine.color);
+  series.forEach(s => {
+    const vals = months.map(m => s.getValue(m));
+    const solidCount = lastOpen ? n - 1 : n;
+    const pts = vals.slice(0, solidCount).map((v,i) => `${xs[i]},${yFor(v)}`).join(' ');
+    svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="1.5"/>`;
+    if (lastOpen) {
+      svg += `<line x1="${xs[n-2]}" y1="${yFor(vals[n-2])}" x2="${xs[n-1]}" y2="${yFor(vals[n-1])}" stroke="${s.color}" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    }
+    svg += months.map((m,i) => {
+      const v = vals[i];
+      const proj = (lastOpen && i === n - 1) ? ' (projeção)' : '';
+      return `<circle cx="${xs[i]}" cy="${yFor(v)}" r="2.5" fill="${s.color}" data-tip="${s.name} · ${monthTick(m)}${proj}: ${fmtVal(v)}"/>`;
+    }).join('');
+  });
+  svg += months.map((m,i) => `<text x="${xs[i]}" y="${CHART_BOTTOM+18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${monthTick(m)}${(lastOpen && i===n-1)?'*':''}</text>`).join('');
+  svg += `</svg>`;
+  return svg;
+}
+
+function barChartSvg({ months, meta }){
+  const usable = CHART_RIGHT - CHART_LEFT - 48;
+  const slot = Math.min(110, Math.max(50, usable / months.length));
+  const totalWidth = slot * months.length;
+  const startX = CHART_LEFT + 24 + (usable - totalWidth) / 2 + slot / 2;
+  const xs = months.map((_, i) => startX + i * slot);
+  const barW = Math.min(48, slot * 0.55);
+  const maxVal = niceMax(months.map(m => m.totalReal + m.totalAr), meta);
+  const yFor = v => CHART_BOTTOM - (v/maxVal) * (CHART_BOTTOM - CHART_TOP);
+
+  let svg = `<svg viewBox="0 0 720 200" width="100%">`;
+  svg += axisSvg(yTicks(maxVal), v => Math.round(v));
+  svg += `<line x1="${CHART_LEFT}" y1="${CHART_BOTTOM}" x2="${CHART_RIGHT}" y2="${CHART_BOTTOM}" stroke="var(--border)"/>`;
+  svg += refLineSvg(yFor(meta), '#a9a89f');
+  months.forEach((m, i) => {
+    // mês aberto projeta: realizado + a realizar (mês fechado tem ar=0, então não muda nada).
+    const pv = m.presalesRealTotal + m.pvArealizar;
+    const total = m.totalReal + m.totalAr;
+    const outros = total - pv;
+    const proj = m.closed ? '' : ' (projeção)';
+    const x = xs[i] - barW/2;
+    const hPv = CHART_BOTTOM - yFor(pv);
+    const hOut = (CHART_BOTTOM - yFor(pv + outros)) - hPv;
+    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv}" width="${barW}" height="${hPv}" fill="var(--g-dark)" data-tip="${monthTick(m)} · agendado pela pré-vendas${proj}: ${pv}"/>`;
+    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv-hOut}" width="${barW}" height="${hOut}" fill="var(--g-pale)" data-tip="${monthTick(m)} · sem envolvimento de pré-vendas${proj}: ${outros}"/>`;
+    svg += `<text x="${xs[i]}" y="${CHART_BOTTOM+18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${monthTick(m)}${m.closed?'':'*'}</text>`;
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+function rowProjected(r){
+  return r[1] + r[2]; // realizada + a_realizar (projeção do mês corrente; mês fechado tem ar=0)
+}
+
+function seriesFromRows(months, getRows){
+  const names = new Set();
+  months.forEach(m => getRows(m).forEach(r => { if (rowProjected(r) > 0) names.add(r[0]); }));
+  return [...names];
+}
+
+function renderSeriesChart(containerId, legendId, months, getRows){
+  const names = seriesFromRows(months, getRows);
+  if (!names.length) {
+    document.getElementById(containerId).innerHTML = '<p class="week-empty">sem dados no período</p>';
+    document.getElementById(legendId).innerHTML = '';
+    return;
+  }
+  const maxVal = niceMax(months.flatMap(m => getRows(m).map(rowProjected)), 1);
+  const series = names.map((name, i) => ({
+    name, color: SERIES_COLORS[i % SERIES_COLORS.length],
+    getValue: m => rowProjected(getRows(m).find(r => r[0] === name) || [name,0,0,0]),
+  }));
+  document.getElementById(containerId).innerHTML = lineChartSvg({ months, series, maxVal, fmtVal: v => Math.round(v), openMonthMarker: true });
+  document.getElementById(legendId).innerHTML = series.map(s =>
+    `<span><span class="line-swatch" style="background:${s.color};"></span>${s.name}</span>`
+  ).join('');
+}
+
+function initTooltips(){
+  const tip = document.getElementById('chart-tip');
+  document.body.addEventListener('mousemove', e => {
+    const target = e.target.closest ? e.target.closest('[data-tip]') : null;
+    if (target) {
+      tip.textContent = target.getAttribute('data-tip');
+      tip.style.left = e.clientX + 'px';
+      tip.style.top = e.clientY + 'px';
+      tip.hidden = false;
+    } else {
+      tip.hidden = true;
+    }
+  });
+}
+
+function renderHistorico(){
+  if (!HIST_ORDER.length) {
+    ['chart-noshow','chart-meta','chart-origem','chart-canal','chart-pessoa'].forEach(id =>
+      document.getElementById(id).innerHTML = '<p class="week-empty">sem meses salvos ainda</p>'
+    );
+    return;
+  }
+  const months = HIST_ORDER.map(k => MONTHS[k]);
+
+  const maxNs = niceMax(months.flatMap(m => [m.ns.total, m.ns.pv]), 10);
+  document.getElementById('chart-noshow').innerHTML = lineChartSvg({
+    months, maxVal: maxNs, fmtVal: v => `${Math.round(v)}%`,
+    refLine: { value: 10, color: '#c9a29c' },
+    series: [
+      { name: 'No-show total', color: 'var(--text-secondary)', getValue: m => m.ns.total },
+      { name: 'No-show pré-vendas', color: 'var(--g-dark)', getValue: m => m.ns.pv },
+    ],
+  });
+
+  document.getElementById('chart-meta').innerHTML = barChartSvg({ months, meta: months[0].meta });
+  document.getElementById('chart-meta-goal-legend').textContent = `meta de agendamentos: ${months[0].meta}`;
+
+  const origemRows = m => [...m.origem["CANAIS PRÓPRIOS"], ...m.origem["CANAIS EXTERNOS"]];
+  const monthsOrigem = months.filter(m => m.origemDisponivel);
+  const monthsCanal = months.filter(m => m.canalDisponivel);
+  renderSeriesChart('chart-origem', 'chart-origem-legend', monthsOrigem, origemRows);
+  renderSeriesChart('chart-canal', 'chart-canal-legend', monthsCanal, m => m.canal);
+  renderSeriesChart('chart-pessoa', 'chart-pessoa-legend', months, m => m.pessoa);
+}
+
+
+if (DEFAULT_MES) { renderMonth(DEFAULT_MES); }
+initTooltips();
+</script>
 </body>
 </html>

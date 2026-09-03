@@ -1,4 +1,4 @@
-"""Cálculos de negócio: dias úteis/MTD, hero (canal próprio ∩ pré-vendas), no-show,
+"""Cálculos de negócio: dias úteis/MTD, hero (agendado pela pré-vendas, qualquer origem), no-show,
 breakdowns por canal (3 categorias mutuamente exclusivas: real/a-realizar/no-show),
 tabela de calls e payload combinado de todos os meses (seções 4, 5, 9, 10 do CLAUDE.md).
 """
@@ -20,6 +20,10 @@ def _to_date(iso):
 def _ddmm(iso):
     d = _to_date(iso)
     return f"{d.day:02d}/{d.month:02d}"
+
+
+def _ddmm_or_dash(iso):
+    return _ddmm(iso) if iso else "—"
 
 
 def business_days(d1, d2, feriados_set):
@@ -55,8 +59,11 @@ def compute_mtd(mes, hoje, feriados_todos):
     feriados_set = set(feriados_todos)
     cutoff = mtd_cutoff(hoje)
     cutoff_no_mes = min(max(cutoff, inicio), fim)
+    ontem = hoje - datetime.timedelta(days=1)
     dias_uteis_total = business_days(inicio, fim, feriados_set)
-    dias_uteis_decorridos = business_days(inicio, cutoff_no_mes, feriados_set)
+    # dias úteis decorridos nunca inclui hoje — só dias 100% completos, mesmo
+    # quando o cutoff (última sexta, ou hoje se hoje for sexta) cai em cima de hoje.
+    dias_uteis_decorridos = business_days(inicio, min(cutoff_no_mes, ontem), feriados_set)
     feriados_no_mes = [f for f in feriados_todos if inicio.isoformat() <= f <= fim.isoformat()]
     return {
         "cutoff": cutoff_no_mes,
@@ -91,7 +98,7 @@ def compute_month_view(mes_key, state, taxonomia, feriados_todos, hoje):
     presales_nome = taxonomia["presales_agendador"].strip().lower()
 
     def is_propria(c):
-        return tax.origem_tipo(c["origem"], taxonomia) == "propria"
+        return c.get("origemTipo") == "propria"
 
     def is_presales(c):
         return presales_nome in c["agendadoPor"].strip().lower()
@@ -102,25 +109,30 @@ def compute_month_view(mes_key, state, taxonomia, feriados_todos, hoje):
     total_a_realizar = [c for c in calls if c["status"] == "a_realizar"]
     closed = len(total_a_realizar) == 0
 
-    hero_calls = [c for c in calls if is_propria(c) and is_presales(c)]
-    hero_real = sum(1 for c in hero_calls if c["status"] == "realizada" and not c["noShow"])
-    hero_ns = sum(1 for c in hero_calls if c["status"] == "realizada" and c["noShow"])
-    hero_ar = sum(1 for c in hero_calls if c["status"] == "a_realizar")
+    # "Envolvimento de pré-vendas" (hero) = agendado por Vinicius, qualquer origem
+    # (própria ou externa) — seção 4 revisada. O card "canais próprios" abaixo é uma
+    # métrica separada e não depende dessa definição.
+    presales_calls = [c for c in calls if is_presales(c)]
+    presales_realizadas = [c for c in presales_calls if c["status"] == "realizada"]
+    presales_ns = [c for c in presales_realizadas if c["noShow"]]
+    presales_ar = sum(1 for c in presales_calls if c["status"] == "a_realizar")
+    presales_real_total = len(presales_realizadas) - len(presales_ns)
 
     propria_calls = [c for c in calls if is_propria(c)]
     externa_calls = [c for c in calls if not is_propria(c)]
     propria_real_total = sum(1 for c in propria_calls if c["status"] == "realizada" and not c["noShow"])
-    outros_propria = propria_real_total - hero_real
+    propria_ns = sum(1 for c in propria_calls if c["status"] == "realizada" and c["noShow"])
+    propria_ar = sum(1 for c in propria_calls if c["status"] == "a_realizar")
+    externa_ar = sum(1 for c in externa_calls if c["status"] == "a_realizar")
 
-    presales_calls = [c for c in calls if is_presales(c)]
-    presales_realizadas = [c for c in presales_calls if c["status"] == "realizada"]
-    presales_ns = [c for c in presales_realizadas if c["noShow"]]
+    origem_disponivel = any(c["origem"] for c in calls)
+    canal_disponivel = any(c["canal"] for c in calls)
+
     total_realizadas = [c for c in calls if c["status"] == "realizada"]
     total_ns = [c for c in total_realizadas if c["noShow"]]
 
     ns_total_pct = round((len(total_ns) / len(total_realizadas)) * 100) if total_realizadas else 0
     ns_pv_pct = round((len(presales_ns) / len(presales_realizadas)) * 100) if presales_realizadas else 0
-    presales_real_total = len(presales_realizadas) - len(presales_ns)
 
     pessoas = defaultdict(lambda: {"real": 0, "ar": 0, "ns": 0})
     for c in calls:
@@ -142,28 +154,33 @@ def compute_month_view(mes_key, state, taxonomia, feriados_todos, hoje):
         "label": label,
         "closed": closed,
         "meta": meta,
-        "prevendasReal": hero_real,
-        "outrosPropria": outros_propria,
-        "pvNoshow": hero_ns,
-        "pvArealizar": hero_ar,
+        "prevendasReal": presales_real_total,
+        "pvNoshow": len(presales_ns),
+        "pvArealizar": presales_ar,
         "ns": {"total": ns_total_pct, "pv": ns_pv_pct},
         "presalesRealTotal": presales_real_total,
         "totalReal": len(total_realizadas) - len(total_ns),
         "totalNs": len(total_ns),
         "totalAr": len(total_a_realizar),
+        "propriaRealTotal": propria_real_total,
+        "propriaNs": propria_ns,
+        "propriaAr": propria_ar,
+        "externaAr": externa_ar,
+        "origemDisponivel": origem_disponivel,
+        "canalDisponivel": canal_disponivel,
         "origem": {
-            "CANAIS PRÓPRIOS": _tri_breakdown("origem", propria_calls),
-            "CANAIS EXTERNOS": _tri_breakdown("origem", externa_calls),
+            "CANAIS PRÓPRIOS": _tri_breakdown("origem", propria_calls) if origem_disponivel else [],
+            "CANAIS EXTERNOS": _tri_breakdown("origem", externa_calls) if origem_disponivel else [],
         },
-        "canal": _tri_breakdown("canal", calls),
+        "canal": _tri_breakdown("canal", calls) if canal_disponivel else [],
         "pessoa": pessoa_rows,
     }
 
     if closed:
         view["mtdLine"] = "Mês encerrado"
-        todas = sorted(calls, key=lambda c: c["data"])
+        todas = sorted(calls, key=lambda c: c["data"] or "")
         view["allCalls"] = [
-            [_ddmm(c["data"]), c["empresa"], c["origem"], c["canal"], apelido(c), bool(c["noShow"])]
+            [_ddmm_or_dash(c["data"]), c["empresa"], c["origem"] or "—", c["canal"] or "—", apelido(c), bool(c["noShow"])]
             for c in todas
         ]
     else:
@@ -174,12 +191,12 @@ def compute_month_view(mes_key, state, taxonomia, feriados_todos, hoje):
         )
         view["expected"] = mtd["pct_mtd"] * meta
 
-        mes_a_realizar = sorted(total_a_realizar, key=lambda c: c["data"])
+        mes_a_realizar = sorted(total_a_realizar, key=lambda c: c["data"] or "")
         titulo_mes = label.replace(" ", "/")
         view["week"] = {
             "title": f"Pipeline do mês ({titulo_mes}) · {len(mes_a_realizar)} calls",
             "calls": [
-                [_ddmm(c["data"]), c["empresa"], c["origem"], c["canal"], apelido(c)]
+                [_ddmm_or_dash(c["data"]), c["empresa"], c["origem"] or "—", c["canal"] or "—", apelido(c)]
                 for c in mes_a_realizar
             ],
         }

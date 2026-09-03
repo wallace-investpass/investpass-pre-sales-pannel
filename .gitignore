@@ -1,8 +1,3 @@
-# Lista mestra local — contém nomes reais de empresas, contatos e IDs do
-# Pipedrive. Não é publicada no repositório (que é público); o dashboard
-# gerado em docs/index.html é o único artefato compartilhado publicamente.
-data/*.json
-
 __pycache__/
 *.pyc
 .DS_Store

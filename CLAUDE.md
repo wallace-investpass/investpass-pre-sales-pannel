@@ -30,55 +30,55 @@ Quando o mês fecha, tudo migra para Realizadas e a lista de À realizar vem vaz
 ### Exemplo real (fechamento de agosto/2026) — 54 linhas, todas "Realizadas"
 
 ```
-Grupo Bimbo — 04/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Transpanorama — 04/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
+Grupo Bimbo — 04/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Transpanorama — 04/08 — Associados — Associados (Agendada por @Lucas Pedroso)
 Grupo Servopa — 04/08 — LinkedIn Seixas — Ligação (Agendada por @Vinicius Almeida)
-Kynetec — 05/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Renault — 05/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-FQM — 06/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
+Kynetec — 05/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Renault — 05/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+FQM — 06/08 — Associados — Associados (Agendada por @Lucas Pedroso)
 PetroReconcavo — 06/08 — LinkedIn Raolho — Email (Agendada por @Vinicius Almeida)
 Carbel Auto Group — 06/08 — LinkedIn Seixas — Ligação (Agendada por @Vinicius Almeida) NO-SHOW
-Fundação Butantan — 10/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-OAB Pernambuco — 11/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Mextra Metais — 12/08 — Indicação Externa — Embaixadores (Agendada por @Xande) NO-SHOW
-Grupo Pereira — 12/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Otis — 12/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Alstom Group — 12/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
+Fundação Butantan — 10/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+OAB Pernambuco — 11/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Mextra Metais — 12/08 — Associados — Embaixadores (Agendada por @Xande) NO-SHOW
+Grupo Pereira — 12/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Otis — 12/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Alstom Group — 12/08 — Associados — Associados (Agendada por @Lucas Pedroso)
 Grupo Rioto Saúde Ocupacional — 12/08 — Landing Page — WhatsApp (Agendada por @Vinicius Almeida)
-Resolv — 12/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Comerc Energia — 13/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-SBCD Saúde — 13/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso) NO-SHOW
-Lactalis Brasil — 13/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Evolua Energia — 13/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-AFDatalink — 13/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
+Resolv — 12/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Comerc Energia — 13/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+SBCD Saúde — 13/08 — Associados — Associados (Agendada por @Lucas Pedroso) NO-SHOW
+Lactalis Brasil — 13/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Evolua Energia — 13/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+AFDatalink — 13/08 — Associados — Associados (Agendada por @Lucas Pedroso)
 Sertran Transportes — 14/08 — LinkedIn Raolho — LinkedIn (Agendada por @Vinicius Almeida)
 Icon Solutions do Brasil — 14/08 — LinkedIn Vini — Ligação (Agendada por @Vinicius Almeida)
 Moderna Tecnologia — 14/08 — LinkedIn Raolho — WhatsApp (Agendada por @Vinicius Almeida)
-Soffner Teconologia — 14/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Celesc — 17/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Camil — 17/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-ArcelorMittal — 18/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-G4 Educação — 19/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
+Soffner Teconologia — 14/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Celesc — 17/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Camil — 17/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+ArcelorMittal — 18/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+G4 Educação — 19/08 — Associados — Associados (Agendada por @Lucas Pedroso)
 A.C.Camargo Cancer Center — 21/08 — LinkedIn Vini — Email (Agendada por @Vinicius Almeida)
 Wobben Windpower — 24/08 — LinkedIn Vini — Ligação (Agendada por @Vinicius Almeida)
 SiDi — 24/08 — Lista Fria — Email (Agendada por @Vinicius Almeida)
-Capgemini — 25/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
+Capgemini — 25/08 — Associados — Associados (Agendada por @Lucas Pedroso)
 Informa Markets — 25/08 — LinkedIn Vini — Ligação (Agendada por @Vinicius Almeida)
 Boca Rosa Company — 25/08 — Lista Fria — Email (Agendada por @Vinicius Almeida)
 Ticket/Edenred — 25/08 — CONARH — WhatsApp (Agendada por @Vinicius Almeida)
-Danone — 25/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Grupo Argenta — 25/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Consórcio Tradição — 25/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso) NO-SHOW
-Ploomes — 26/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Lightwall — 26/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
+Danone — 25/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Grupo Argenta — 25/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Consórcio Tradição — 25/08 — Associados — Associados (Agendada por @Lucas Pedroso) NO-SHOW
+Ploomes — 26/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Lightwall — 26/08 — Associados — Associados (Agendada por @Lucas Pedroso)
 Fox Human Capital — 27/08 — LinkedIn Raolho — Ligação (Agendada por @Vinicius Almeida)
 LG Lugar de Gente — 27/08 — LinkedIn Vini — Ligação (Agendada por @Vinicius Almeida)
-Dr. Ocupacional — 27/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
-Samsung Eletronics — 27/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
+Dr. Ocupacional — 27/08 — Associados — Associados (Agendada por @Lucas Pedroso)
+Samsung Eletronics — 27/08 — Associados — Associados (Agendada por @Lucas Pedroso)
 Grupo Hub — 27/08 — LinkedIn Seixas — Email (Agendada por @Vinicius Almeida)
 BenCorp — 27/08 — CONARH — WhatsApp (Agendada por @Vinicius Almeida)
 Cayro Contabilidade — 28/08 — Flash — Ligação (Agendada por @Vinicius Almeida)
-Santa Colomba — 28/08 — Indicação Externa — Associados (Agendada por @Lucas Pedroso)
+Santa Colomba — 28/08 — Associados — Associados (Agendada por @Lucas Pedroso)
 Sistel — 28/08 — CONARH — WhatsApp (Agendada por @Vinicius Almeida)
 Unimed São Roque — 31/08 — CONARH — Ligação (Agendada por @Vinicius Almeida)
 Hospital Ophir — 31/08 — CONARH — WhatsApp (Agendada por @Vinicius Almeida) NO-SHOW
@@ -96,7 +96,7 @@ GRT Gratiam — 31/08 — CONARH — Ligação (Agendada por @Vinicius Almeida) 
 LinkedIn Vini · LinkedIn Seixas · LinkedIn Raolho · Lista fria · Landing Page · CONARH · Reengaja
 
 **Origem do lead — canais externos (não entram na meta):**
-Indicação Externa · Flash · Embaixadores
+Associados (renomeada de "Indicação Externa" em 2026-09 — mesmo canal, nome novo) · Flash · Embaixadores
 
 **Canal de agendamento (como a call foi marcada — dimensão separada de "origem"):**
 LinkedIn · Ligação · Email · WhatsApp · Associados · Referral · Embaixadores
@@ -120,7 +120,7 @@ Qualquer agendador fora dessa lista é exibido pelo primeiro nome.
 - Meta mensal calibrada: **20 reuniões realizadas via canais próprios**.
 - **Envolvimento de pré-vendas (métrica do hero, seção 5) = agendado por Vinicius Almeida, qualquer origem** (própria ou externa) — **não** exige canal próprio. Uma call de canal externo agendada pelo Vinicius (ex: Cayro Contabilidade via Flash) entra normalmente nessa métrica, no hero, no badge/barra/projeção e no cálculo de MTD/esperado. O card "Total de agendamentos (canais próprios)" (seção 5) é uma métrica separada e independente — continua sendo o total de canal próprio de qualquer agendador, não muda com essa regra.
 - **No-show pré-vendas**: só conta no-shows de calls agendadas pelo Vinicius — **sem** filtrar por origem própria/externa (já era assim antes e continua igual; ver card "No-show" na seção 5).
-- **Lucas Pedroso** gerencia Indicação Externa (Associados) — não conta como pré-vendas. *Atenção: no exemplo real ele também agendou uma reunião via CONARH (Marsh/Mercer, 31/08) — não assumir que Lucas Pedroso só aparece em linhas de Associados/Indicação Externa.*
+- **Lucas Pedroso** gerencia Associados — não conta como pré-vendas. *Atenção: no exemplo real ele também agendou uma reunião via CONARH (Marsh/Mercer, 31/08) — não assumir que Lucas Pedroso só aparece em linhas de origem/canal Associados.*
 - CONARH = canal próprio, conta na meta.
 - Flash e Embaixadores = externos, não contam na meta.
 - Landing Page = canal próprio.
@@ -193,7 +193,7 @@ Rodando a taxonomia acima contra os dados reais, aparecem pontos que a spec verb
 
 1. **Correção de dado**: a linha do Grupo Rioto Saúde Ocupacional (12/08) tinha origem "Inbound" e canal "Ligação" registrados errado — o correto é **Origem = Landing Page, Canal = WhatsApp** (já corrigido no exemplo da seção 2). Isso valida que a checagem de "origem/canal não reconhecido" (seção 6, item 2) tem valor real: foi ela que pegou esse erro de digitação. O Claude Code deve manter essa validação ativa mesmo no fluxo incremental (seção 9) — todo novo input, seja avulso ou em lote, passa por ela.
 2. **Variação de capitalização**: "Lista Fria" aparece nos dados reais, mas a taxonomia da seção 3 lista "Lista fria" (minúsculo). O parser precisa normalizar por case-insensitive pra não tratar como origem desconhecida.
-3. **Lucas Pedroso não é exclusivo de Associados/Indicação Externa** — a linha `Marsh/Mercer — 31/08 — CONARH — LinkedIn (Agendada por @Lucas Pedroso)` mostra ele agendando via CONARH também. Não codificar regra implícita de "pessoa X = canal Y".
+3. **Lucas Pedroso não é exclusivo de origem/canal Associados** — a linha `Marsh/Mercer — 31/08 — CONARH — LinkedIn (Agendada por @Lucas Pedroso)` mostra ele agendando via CONARH também. Não codificar regra implícita de "pessoa X = canal Y".
 
 Esse fechamento de agosto é só **Realizadas** (54 linhas, sem "À realizar") — bom caso de teste pro modo "mês fechado".
 
@@ -223,7 +223,7 @@ NOVA CALL AGENDADA
 |---|---|---|
 | `Empresa` | empresa | — |
 | `Data da reunião` | data | Vem com hora (`18/09 - 14h`) — **decidido: descartar a hora**, guardar só a data, igual ao formato compacto |
-| `Origem do lead` | origem | Minúsculo (`indicação externa`) — normalizar case-insensitive contra a taxonomia da seção 3 |
+| `Origem do lead` | origem | Minúsculo (`indicação externa` — exemplo anterior à renomeação da seção 3; hoje essa origem se chama `Associados`) — normalizar case-insensitive contra a taxonomia da seção 3 |
 | `Canal de agendamento` | canal | Vem com sufixo (`associada - Camila Martins`) — `associada` mapeia para `Associados`; o texto depois do traço é o nome de quem indicou/associou. **Decidido: descartar**, não guardar como metadado |
 | `Vendedor` | agendadoPor | Equivalente ao "Agendada por @Pessoa" do formato compacto |
 | `Link do Pipedrive` | pipedriveId | Não existe no formato compacto hoje — dá pra extrair o ID numérico da URL (`3971`). Vale adicionar como campo opcional em todo o modelo (compacto e Slack), útil como identificador único mais confiável que empresa+data para os comandos de atualização da seção 9 |

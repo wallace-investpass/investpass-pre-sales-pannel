@@ -112,7 +112,7 @@
     {
       "id": "06c107e0",
       "empresa": "Gelita",
-      "data": "2026-09-03",
+      "data": "2026-09-10",
       "origem": "Associados",
       "origemReconhecida": true,
       "origemTipo": "externa",
@@ -648,6 +648,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-03T13:07:41"
+    },
+    {
+      "id": "b4d1dac1",
+      "empresa": "GRT Gratiam",
+      "data": "2026-09-04",
+      "origem": "CONARH",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "Ligação",
+      "canalReconhecido": true,
+      "agendadoPor": "Vinicius Almeida",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-02T22:39:11"
     }
   ]
 }

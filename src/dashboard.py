@@ -827,26 +827,28 @@ function lineChartSvg({ months, series, maxVal, fmtVal, refLine, openMonthMarker
   const xs = xPositions(months.length, CHART_LEFT+24, CHART_RIGHT-24);
   const yFor = v => CHART_BOTTOM - (v/maxVal) * (CHART_BOTTOM - CHART_TOP);
   const n = months.length;
-  const lastOpen = !!openMonthMarker && n > 1 && !months[n-1].closed;
+  // Projeção é por mês (closed), não "o último item da lista" — com dado de
+  // mês futuro salvo adiantado, o mês corrente pode não ser mais o último
+  // ponto do eixo, e mais de um mês pode estar aberto ao mesmo tempo
+  // (seção 10 do CLAUDE.md).
+  const isProjected = i => !!openMonthMarker && !months[i].closed;
   let svg = `<svg viewBox="0 0 720 200" width="100%">`;
   svg += axisSvg(yTicks(maxVal), fmtVal);
   svg += `<line x1="${CHART_LEFT}" y1="${CHART_BOTTOM}" x2="${CHART_RIGHT}" y2="${CHART_BOTTOM}" stroke="var(--border)"/>`;
   if (refLine) svg += refLineSvg(yFor(refLine.value), refLine.color);
   series.forEach(s => {
     const vals = months.map(m => s.getValue(m));
-    const solidCount = lastOpen ? n - 1 : n;
-    const pts = vals.slice(0, solidCount).map((v,i) => `${xs[i]},${yFor(v)}`).join(' ');
-    svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="1.5"/>`;
-    if (lastOpen) {
-      svg += `<line x1="${xs[n-2]}" y1="${yFor(vals[n-2])}" x2="${xs[n-1]}" y2="${yFor(vals[n-1])}" stroke="${s.color}" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    for (let i = 1; i < n; i++) {
+      const dashed = isProjected(i);
+      svg += `<line x1="${xs[i-1]}" y1="${yFor(vals[i-1])}" x2="${xs[i]}" y2="${yFor(vals[i])}" stroke="${s.color}" stroke-width="1.5"${dashed ? ' stroke-dasharray="4,3"' : ''}/>`;
     }
     svg += months.map((m,i) => {
       const v = vals[i];
-      const proj = (lastOpen && i === n - 1) ? ' (projeção)' : '';
+      const proj = isProjected(i) ? ' (projeção)' : '';
       return `<circle cx="${xs[i]}" cy="${yFor(v)}" r="2.5" fill="${s.color}" data-tip="${s.name} · ${monthTick(m)}${proj}: ${fmtVal(v)}"/>`;
     }).join('');
   });
-  svg += months.map((m,i) => `<text x="${xs[i]}" y="${CHART_BOTTOM+18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${monthTick(m)}${(lastOpen && i===n-1)?'*':''}</text>`).join('');
+  svg += months.map((m,i) => `<text x="${xs[i]}" y="${CHART_BOTTOM+18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${monthTick(m)}${isProjected(i)?'*':''}</text>`).join('');
   svg += `</svg>`;
   return svg;
 }

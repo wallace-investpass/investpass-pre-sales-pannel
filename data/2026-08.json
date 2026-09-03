@@ -990,24 +990,6 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-02T22:39:11"
-    },
-    {
-      "id": "b4d1dac1",
-      "empresa": "GRT Gratiam",
-      "data": "2026-08-31",
-      "origem": "CONARH",
-      "origemReconhecida": true,
-      "origemTipo": "propria",
-      "canal": "Ligação",
-      "canalReconhecido": true,
-      "agendadoPor": "Vinicius Almeida",
-      "status": "realizada",
-      "noShow": true,
-      "pipedriveId": null,
-      "contato": null,
-      "cargo": null,
-      "raw": "",
-      "criadoEm": "2026-09-02T22:39:11"
     }
   ]
 }

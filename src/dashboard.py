@@ -15,6 +15,7 @@ def _embed_json(value):
 def render(payload, generated_at=""):
     months_json = _embed_json(payload["months"])
     hist_order_json = _embed_json(payload["histOrder"])
+    feriados_json = _embed_json(payload["feriados"])
     default_mes = payload["defaultMes"]
 
     options_html = ""
@@ -189,12 +190,12 @@ def render(payload, generated_at=""):
 <script>
 const MONTHS = {months_json};
 const HIST_ORDER = {hist_order_json};
+const FERIADOS = {feriados_json};
 const DEFAULT_MES = {json.dumps(default_mes)};
 
 {JS}
 
-if (DEFAULT_MES) {{ renderMonth(DEFAULT_MES); }}
-initTooltips();
+initApp();
 </script>
 </body>
 </html>'''
@@ -343,6 +344,214 @@ CSS = '''
 '''
 
 JS = r'''
+// ---- Data/hora ao vivo (relógio de quem está olhando a página) ----------
+// Tudo que depende de "hoje" — dias úteis/MTD, a transição a_realizar→
+// realizada, hero, badge, breakdowns e tabelas — é calculado aqui, no
+// carregamento da página e de novo se a aba ficar aberta atravessando a
+// virada do dia (seção 9 do CLAUDE.md). Nunca é persistido: MONTHS guarda
+// só o status literal salvo em data/*.json.
+
+function parseIso(iso){
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function isoOf(date){
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function todayIso(){
+  return isoOf(new Date());
+}
+
+function ddmm(iso){
+  const [, m, d] = iso.split('-');
+  return `${d}/${m}`;
+}
+
+function ddmmOrDash(iso){
+  return iso ? ddmm(iso) : '—';
+}
+
+function businessDays(d1, d2, feriadosSet){
+  if (d1 > d2) return 0;
+  let n = 0;
+  const d = new Date(d1);
+  while (d <= d2) {
+    if (d.getDay() !== 0 && d.getDay() !== 6 && !feriadosSet.has(isoOf(d))) n++;
+    d.setDate(d.getDate() + 1);
+  }
+  return n;
+}
+
+function mtdCutoffDate(hoje){
+  // Última sexta-feira até hoje, ou o próprio dia se hoje for sexta (seção 4).
+  const wdMon0 = (hoje.getDay() + 6) % 7; // segunda=0 ... domingo=6
+  const diasDesdeSexta = (wdMon0 - 4 + 7) % 7;
+  const cutoff = new Date(hoje);
+  cutoff.setDate(cutoff.getDate() - diasDesdeSexta);
+  return cutoff;
+}
+
+function monthBounds(mesKey){
+  const [ano, m] = mesKey.split('-').map(Number);
+  const inicio = new Date(ano, m - 1, 1);
+  const fim = new Date(ano, m, 0);
+  return [inicio, fim];
+}
+
+function clampDate(d, lo, hi){
+  if (d < lo) return lo;
+  if (d > hi) return hi;
+  return d;
+}
+
+function computeMtd(mesKey, hoje, feriadosSet){
+  const [inicio, fim] = monthBounds(mesKey);
+  const cutoff = mtdCutoffDate(hoje);
+  const cutoffNoMes = clampDate(cutoff, inicio, fim);
+  const ontem = new Date(hoje);
+  ontem.setDate(ontem.getDate() - 1);
+  const diasUteisTotal = businessDays(inicio, fim, feriadosSet);
+  const diasUteisDecorridos = businessDays(inicio, cutoffNoMes < ontem ? cutoffNoMes : ontem, feriadosSet);
+  return {
+    cutoff: cutoffNoMes,
+    diasUteisTotal,
+    diasUteisDecorridos,
+    pctMtd: diasUteisTotal ? diasUteisDecorridos / diasUteisTotal : 0,
+  };
+}
+
+// Regra de auto-transição (seção 9): só quando a data da call é estritamente
+// anterior a hoje — nunca no próprio dia da call. Nunca muta o objeto original.
+function effectiveCall(c, hojeIso){
+  if (c.status === 'a_realizar' && c.data && c.data < hojeIso) {
+    return Object.assign({}, c, { status: 'realizada' });
+  }
+  return c;
+}
+
+function triBreakdown(chave, universo){
+  const agrupado = new Map();
+  universo.forEach(c => {
+    const nome = c[chave];
+    if (!agrupado.has(nome)) agrupado.set(nome, { real: 0, ar: 0, ns: 0 });
+    const g = agrupado.get(nome);
+    if (c.status === 'realizada') {
+      if (c.noShow) g.ns++; else g.real++;
+    } else {
+      g.ar++;
+    }
+  });
+  const linhas = [...agrupado.entries()].map(([nome, g]) => [nome, g.real, g.ar, g.ns]);
+  linhas.sort((a, b) => (b[1] + b[2] + b[3]) - (a[1] + a[2] + a[3]));
+  return linhas;
+}
+
+function computeMonthView(mesKey, raw, hojeIso, feriadosSet){
+  const calls = raw.calls.map(c => effectiveCall(c, hojeIso));
+  const meta = raw.meta;
+
+  const totalARealizar = calls.filter(c => c.status === 'a_realizar');
+  const closed = totalARealizar.length === 0;
+
+  const presalesCalls = calls.filter(c => c.presales);
+  const presalesRealizadas = presalesCalls.filter(c => c.status === 'realizada');
+  const presalesNs = presalesRealizadas.filter(c => c.noShow);
+  const presalesAr = presalesCalls.filter(c => c.status === 'a_realizar').length;
+  const presalesRealTotal = presalesRealizadas.length - presalesNs.length;
+
+  const isPropria = c => c.origemTipo === 'propria';
+  const propriaCalls = calls.filter(isPropria);
+  const externaCalls = calls.filter(c => !isPropria(c));
+  const propriaRealTotal = propriaCalls.filter(c => c.status === 'realizada' && !c.noShow).length;
+  const propriaNs = propriaCalls.filter(c => c.status === 'realizada' && c.noShow).length;
+  const propriaAr = propriaCalls.filter(c => c.status === 'a_realizar').length;
+  const externaAr = externaCalls.filter(c => c.status === 'a_realizar').length;
+
+  const origemDisponivel = calls.some(c => c.origem);
+  const canalDisponivel = calls.some(c => c.canal);
+
+  const totalRealizadas = calls.filter(c => c.status === 'realizada');
+  const totalNs = totalRealizadas.filter(c => c.noShow);
+  const nsTotalPct = totalRealizadas.length ? Math.round((totalNs.length / totalRealizadas.length) * 100) : 0;
+  const nsPvPct = presalesRealizadas.length ? Math.round((presalesNs.length / presalesRealizadas.length) * 100) : 0;
+
+  const view = {
+    label: raw.label,
+    closed,
+    meta,
+    prevendasReal: presalesRealTotal,
+    pvArealizar: presalesAr,
+    ns: { total: nsTotalPct, pv: nsPvPct },
+    presalesRealTotal,
+    totalReal: totalRealizadas.length - totalNs.length,
+    totalNs: totalNs.length,
+    totalAr: totalARealizar.length,
+    propriaRealTotal, propriaNs, propriaAr, externaAr,
+    origemDisponivel, canalDisponivel,
+    origem: {
+      'CANAIS PRÓPRIOS': origemDisponivel ? triBreakdown('origem', propriaCalls) : [],
+      'CANAIS EXTERNOS': origemDisponivel ? triBreakdown('origem', externaCalls) : [],
+    },
+    canal: canalDisponivel ? triBreakdown('canal', calls) : [],
+    pessoa: triBreakdown('agendadoPor', calls),
+  };
+
+  if (closed) {
+    view.mtdLine = 'Mês encerrado';
+    const todas = [...calls].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+    view.allCalls = todas.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, !!c.noShow]);
+  } else {
+    const hojeDate = parseIso(hojeIso);
+    const mtd = computeMtd(mesKey, hojeDate, feriadosSet);
+    const cutoffLabel = ddmm(isoOf(mtd.cutoff));
+    view.mtdLine = `MTD ${cutoffLabel} · ${mtd.diasUteisDecorridos} de ${mtd.diasUteisTotal} dias úteis (até ${cutoffLabel})`;
+    view.expected = mtd.pctMtd * meta;
+
+    const mesARealizar = [...totalARealizar].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+    const tituloMes = raw.label.replace(' ', '/');
+    view.week = {
+      title: `Pipeline do mês (${tituloMes}) · ${mesARealizar.length} calls`,
+      calls: mesARealizar.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor]),
+    };
+  }
+
+  return view;
+}
+
+let FERIADOS_SET;
+let VIEWS = {};
+let CURRENT_TODAY = null;
+let ACTIVE_MES = null;
+let ACTIVE_TAB = 'mensal';
+
+function recomputeViews(){
+  CURRENT_TODAY = todayIso();
+  VIEWS = {};
+  Object.keys(MONTHS).forEach(key => {
+    VIEWS[key] = computeMonthView(key, MONTHS[key], CURRENT_TODAY, FERIADOS_SET);
+  });
+}
+
+function checkDayRollover(){
+  if (todayIso() === CURRENT_TODAY) return;
+  recomputeViews();
+  if (ACTIVE_MES) renderMonth(ACTIVE_MES);
+  if (ACTIVE_TAB === 'historico') renderHistorico();
+}
+
+function initApp(){
+  FERIADOS_SET = new Set(FERIADOS);
+  recomputeViews();
+  if (DEFAULT_MES) renderMonth(DEFAULT_MES);
+  initTooltips();
+  setInterval(checkDayRollover, 60000);
+}
+
 function statusOf(ratio){
   if (ratio > 0.9) return { css: 'green', label: '🟢' };
   if (ratio >= 0.7) return { css: 'amber', label: '🟡' };
@@ -410,7 +619,8 @@ document.addEventListener('click', e => {
 });
 
 function renderMonth(key){
-  const m = MONTHS[key];
+  ACTIVE_MES = key;
+  const m = VIEWS[key];
   document.getElementById('month-dropdown-label').textContent = m.label;
   document.querySelectorAll('.month-dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.mes === key));
   document.getElementById('m-mtdline').textContent = m.mtdLine;
@@ -527,6 +737,7 @@ function renderMonth(key){
 }
 
 function switchTab(tab){
+  ACTIVE_TAB = tab;
   document.getElementById('view-mensal').style.display = tab === 'mensal' ? 'block' : 'none';
   document.getElementById('view-historico').style.display = tab === 'historico' ? 'block' : 'none';
   document.getElementById('month-dropdown').style.display = tab === 'mensal' ? '' : 'none';
@@ -682,7 +893,7 @@ function renderHistorico(){
     );
     return;
   }
-  const months = HIST_ORDER.map(k => MONTHS[k]);
+  const months = HIST_ORDER.map(k => VIEWS[k]);
 
   const maxNs = niceMax(months.flatMap(m => [m.ns.total, m.ns.pv]), 10);
   document.getElementById('chart-noshow').innerHTML = lineChartSvg({

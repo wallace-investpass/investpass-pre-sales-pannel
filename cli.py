@@ -16,12 +16,14 @@ Comandos:
       movida para a lista mestra desse mês.
 
   gerar [--mes YYYY-MM] [--push]
-      Roda a virada automática de status em TODOS os meses salvos (a_realizar
-      cuja data já passou vira realizada), calcula as métricas de cada mês e
-      gera um único docs/index.html com todos eles (abas Detalhe mensal/
-      Histórico, dropdown de mês) — esse é o arquivo servido pelo GitHub
-      Pages. --mes só escolhe qual mês abre selecionado por padrão (default:
-      o mais recente salvo). --push também faz commit + push de docs/
+      Embute os dados brutos de TODOS os meses salvos num único
+      docs/index.html (abas Detalhe mensal/Histórico, dropdown de mês) —
+      esse é o arquivo servido pelo GitHub Pages. A transição a_realizar→
+      realizada, MTD e todas as métricas dependentes de data são calculadas
+      no navegador, ao vivo, com o relógio de quem está olhando a página —
+      não são calculadas nem persistidas aqui (seção 9 do CLAUDE.md).
+      --mes só escolhe qual mês abre selecionado por padrão (default: o
+      mais recente salvo). --push também faz commit + push de docs/
       automaticamente, publicando a atualização (seção 13 do CLAUDE.md).
 
 Exemplos:
@@ -121,14 +123,7 @@ def cmd_gerar(args):
         print("nenhum mês salvo em data/ ainda — importe calls antes de gerar o dashboard.")
         return
 
-    total_changed = 0
-    months_data = []
-    for mes in meses:
-        state, changed = store.auto_flip_status(mes)
-        total_changed += changed
-        months_data.append((mes, state))
-    if total_changed:
-        print(f"{total_changed} call(s) viraram 'realizada' automaticamente (data já passou), em {len(meses)} mês(es).")
+    months_data = [(mes, store.load_month(mes)) for mes in meses]
 
     taxonomia = tax.load_taxonomia()
     feriados = tax.load_feriados()
@@ -144,10 +139,12 @@ def cmd_gerar(args):
     out_path.write_text(html_out, encoding="utf-8")
 
     print(f"dashboard gerado: {out_path}")
+    print("(aberto/fechado e as métricas de cada mês são calculados ao vivo no navegador, com o relógio de quem está olhando — não aparecem aqui.)")
     for mes in meses:
         m = payload["months"][mes]
-        status = "fechado" if m["closed"] else "aberto"
-        print(f"  {mes} ({status}): {m['prevendasReal']} pré-vendas realizadas / meta {m['meta']}")
+        n_real = sum(1 for c in m["calls"] if c["status"] == "realizada")
+        n_ar = sum(1 for c in m["calls"] if c["status"] == "a_realizar")
+        print(f"  {mes}: {len(m['calls'])} call(s) salva(s) ({n_real} realizada(s), {n_ar} a_realizar salva(s) — meta {m['meta']})")
 
     if args.push:
         _git_publish(payload["defaultMes"])

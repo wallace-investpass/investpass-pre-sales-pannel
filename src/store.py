@@ -135,20 +135,3 @@ def change_date(mes, empresa, nova_data_ddmm, ano=None, data_atual=None):
 
     save_month(state)
     return call, mes, None
-
-
-def auto_flip_status(mes, hoje=None):
-    """Regra automática de virada de status (seção 9): toda call 'a_realizar' cuja
-    data já passou e que não foi marcada como no-show vira 'realizada'."""
-    hoje = hoje or datetime.date.today()
-    state = load_month(mes)
-    changed = 0
-    for c in state["calls"]:
-        if c["status"] == "a_realizar":
-            call_date = datetime.date.fromisoformat(c["data"])
-            if call_date < hoje:
-                c["status"] = "realizada"
-                changed += 1
-    if changed:
-        save_month(state)
-    return state, changed

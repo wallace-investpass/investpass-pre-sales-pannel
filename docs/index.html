@@ -16,6 +16,7 @@
     --green-bg:#e6f9ec; --green-text:#0a6b2b;
     --amber:#b5790e; --amber-bg:#faeeda;
     --red:#c0392b; --red-bg:#fcebeb;
+    --blue:#1a5fb4; --blue-bg:#e8f0fc;
   }
   * { box-sizing:border-box; }
   body { margin:0; padding:32px; background:var(--surface-0); font-family:'Montserrat',sans-serif; color:var(--text-primary); }
@@ -107,6 +108,7 @@
   table.calls-table tbody tr:last-child td { border-bottom:none; }
   .ns-tag { background:var(--red-bg); color:var(--red); font-size:10px; padding:1px 6px; border-radius:5px; margin-left:6px; }
   .today-tag { background:#fdead9; color:#c1620a; font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; padding:1px 6px; border-radius:5px; margin-left:6px; }
+  .badge-presales { background:var(--blue-bg); color:var(--blue); font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; padding:1px 6px; border-radius:5px; margin-left:6px; white-space:nowrap; }
 
   .people-card .title { font-size:13px; font-weight:600; margin:0 0 10px; }
   .p-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; min-height:32px; border-radius:8px; padding:2px 6px; margin-left:-6px; margin-right:-6px; transition:background 150ms ease; }
@@ -155,7 +157,7 @@
       <span style="width:1.5px; height:22px; background:var(--text-muted);"></span>
       <h1 style="display:inline; font-size:22px; font-weight:500; margin:0; line-height:22px;">Painel de Pré-Vendas</h1>
     </div>
-    <span class="updated">última atualização: 04/09/2026 14:43</span>
+    <span class="updated">última atualização: 04/09/2026 14:51</span>
   </div>
 
   <div class="top-bar">
@@ -464,7 +466,7 @@ function computeMonthView(mesKey, raw, hojeIso, feriadosSet){
   if (closed) {
     view.mtdLine = 'Mês encerrado';
     const todas = [...calls].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-    view.allCalls = todas.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, !!c.noShow]);
+    view.allCalls = todas.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, !!c.noShow, !!c.presales]);
   } else {
     const hojeDate = parseIso(hojeIso);
     const mtd = computeMtd(mesKey, hojeDate, feriadosSet);
@@ -477,13 +479,13 @@ function computeMonthView(mesKey, raw, hojeIso, feriadosSet){
     const tituloMes = raw.label.replace(' ', '/');
     view.week = {
       title: `Pipeline restante do mês (${tituloMes}) · ${mesARealizar.length} calls a realizar`,
-      calls: mesARealizar.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, c.data === hojeIso]),
+      calls: mesARealizar.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, c.data === hojeIso, !!c.presales]),
     };
 
     const mesRealizadas = [...totalRealizadas].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
     view.realized = {
       title: `Calls já realizadas no mês (${tituloMes}) · ${mesRealizadas.length} calls realizadas (ou que deveriam ter sido)`,
-      calls: mesRealizadas.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, !!c.noShow]),
+      calls: mesRealizadas.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, !!c.noShow, !!c.presales]),
     };
   }
 
@@ -573,11 +575,12 @@ function rowsHtml(list, closed){
 
 function callsTable(rows, mode){
   const body = rows.map(r => {
-    const [d, empresa, origem, canal, pessoa, flag] = r;
+    const [d, empresa, origem, canal, pessoa, flag, presales] = r;
     const dateCell = mode === 'pipeline' && flag ? `${d} <span class="today-tag">HOJE</span>` : d;
     const tagCell = mode === 'closed' && flag ? '<span class="ns-tag">NO-SHOW</span>' : '';
+    const pessoaCell = presales ? `${pessoa} <span class="badge-presales">PRÉ-VENDAS</span>` : pessoa;
     return `<tr>
-      <td>${dateCell}</td><td>${empresa}</td><td>${origem}</td><td>${canal}</td><td>${pessoa}</td>
+      <td>${dateCell}</td><td>${empresa}</td><td>${origem}</td><td>${canal}</td><td>${pessoaCell}</td>
       <td>${tagCell}</td>
     </tr>`;
   }).join('');

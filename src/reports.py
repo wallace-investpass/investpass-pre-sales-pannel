@@ -123,6 +123,8 @@ def build_weekly_report(mes_key, state, taxonomia, feriados_set, hoje, slack_cfg
         _section(f"*📅 Agendamentos da semana*\n{len(semana_calls)} calls programadas\n" + "\n".join(linhas_semana)),
         _divider(),
         _painel_link_section(slack_cfg),
+        _divider(),
+        _section("*Atenção:* reajam com um check ✅ quando virem esse report. Dúvidas, discussões e reports de bug aqui na thread 🧵"),
     ]
 
     fallback = f"Pré-vendas Weekly Report — {hero} de {meta} realizadas ({pct_mtd}% do MTD)"
@@ -157,6 +159,8 @@ def build_fechamento_mensal(mes_key, state, taxonomia, feriados_set, hoje, slack
         ),
         _divider(),
         _painel_link_section(slack_cfg),
+        _divider(),
+        _section("*Atenção:* reajam com um check ✅ quando virem esse report. Dúvidas, discussões e reports de bug aqui na thread 🧵"),
     ]
 
     fallback = f"Pré-vendas Fechamento de {mes_label(mes_key, sep='/')} — {hero}/{meta} ({pct}%)"

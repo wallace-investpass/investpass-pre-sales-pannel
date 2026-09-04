@@ -60,6 +60,18 @@ def post_message(token, channel, text, blocks=None, retries=3, backoff_base=2):
     raise SlackError(str(last_error))
 
 
+def list_recent_messages(token, channel, limit=20):
+    """conversations.history — usado só pra achar uma mensagem específica
+    pra apagar (ex: post indo parar no canal errado). Não faz parte do
+    fluxo normal dos reports."""
+    data = _call(token, "conversations.history", {"channel": channel, "limit": limit})
+    return data.get("messages", [])
+
+
+def delete_message(token, channel, ts):
+    return _call(token, "chat.delete", {"channel": channel, "ts": ts})
+
+
 def notify_owner(token, owner_user_id, text):
     """DM de última instância pro dono do painel — usada quando o post no
     canal falhou de vez, ou quando o job não tem dado pra reportar. Melhor

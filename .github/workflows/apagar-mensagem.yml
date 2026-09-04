@@ -1,0 +1,27 @@
+name: Pré-vendas — Apagar mensagem (manutenção)
+
+on:
+  workflow_dispatch:
+    inputs:
+      canal:
+        description: "ID do canal/DM onde procurar a mensagem"
+        required: true
+      contem:
+        description: "Trecho de texto que a mensagem a apagar deve conter"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  apagar-mensagem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Apaga a mensagem
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: python3 cli.py apagar-mensagem --canal "${{ inputs.canal }}" --contem "${{ inputs.contem }}"

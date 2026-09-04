@@ -43,6 +43,11 @@ Comandos:
       Valida SLACK_BOT_TOKEN (auth.test) e manda uma DM de teste pro dono
       do painel — não posta no canal público. Uso manual/dev.
 
+  apagar-mensagem --canal ID --contem "texto" [--limite N]
+      Apaga a mensagem mais recente do bot num canal/DM cujo texto contenha
+      "texto" — utilitário de manutenção pra corrigir posts indo pro canal
+      errado. Uso manual/dev.
+
 Exemplos:
   python3 cli.py import calls.txt --mes 2026-09
   echo "Empresa — 10/09 — CONARH — WhatsApp (Agendada por @Vinicius Almeida)" | python3 cli.py import - --mes 2026-09
@@ -303,6 +308,38 @@ def cmd_test_slack(args):
     print(f"DM de teste enviada com sucesso para {owner}.")
 
 
+def cmd_apagar_mensagem(args):
+    """Utilitário de manutenção: acha a mensagem mais recente do bot num
+    canal cujo texto contenha --contem, e apaga. Usado pra corrigir posts
+    que foram parar no canal errado (ex: config errada de channel_id)."""
+    token = _slack_token()
+    try:
+        info = slack_mod.auth_test(token)
+        mensagens = slack_mod.list_recent_messages(token, args.canal, limit=args.limite)
+    except slack_mod.SlackError as e:
+        print(f"erro: {e}")
+        sys.exit(1)
+
+    bot_id = info.get("bot_id")
+    candidatas = [
+        m for m in mensagens
+        if m.get("bot_id") == bot_id and args.contem in m.get("text", "")
+    ]
+    if not candidatas:
+        print(f"nenhuma mensagem do bot encontrada em {args.canal} contendo '{args.contem}'.")
+        sys.exit(1)
+
+    alvo = candidatas[0]
+    print(f"apagando mensagem ts={alvo['ts']} em {args.canal}:")
+    print(f"  {alvo.get('text', '')[:200]}")
+    try:
+        slack_mod.delete_message(token, args.canal, alvo["ts"])
+    except slack_mod.SlackError as e:
+        print(f"erro ao apagar: {e}")
+        sys.exit(1)
+    print("mensagem apagada com sucesso.")
+
+
 def main():
     p = argparse.ArgumentParser(description="Painel de pré-vendas investPass")
     sub = p.add_subparsers(dest="comando", required=True)
@@ -344,6 +381,12 @@ def main():
 
     p_test_slack = sub.add_parser("test-slack", help="valida SLACK_BOT_TOKEN (auth.test + DM de teste pro dono, sem tocar no canal público)")
     p_test_slack.set_defaults(func=cmd_test_slack)
+
+    p_apagar = sub.add_parser("apagar-mensagem", help="apaga a mensagem mais recente do bot num canal contendo um texto (manutenção/correção de erro)")
+    p_apagar.add_argument("--canal", required=True, help="ID do canal/DM onde procurar")
+    p_apagar.add_argument("--contem", required=True, help="trecho de texto que a mensagem a apagar deve conter")
+    p_apagar.add_argument("--limite", type=int, default=20, help="quantas mensagens recentes buscar (default: 20)")
+    p_apagar.set_defaults(func=cmd_apagar_mensagem)
 
     args = p.parse_args()
     args.func(args)

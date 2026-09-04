@@ -40,6 +40,10 @@ def _ns_flag(pct):
     return " 🔴" if pct > NS_LIMIT_PCT else ""
 
 
+def _s(n):
+    return "" if n == 1 else "s"
+
+
 def _section(text):
     return {"type": "section", "text": {"type": "mrkdwn", "text": text}}
 
@@ -77,18 +81,14 @@ def build_weekly_report(mes_key, state, taxonomia, feriados_set, hoje, slack_cfg
         key=lambda c: c["data"],
     )
 
-    cap = 10
     pessoa_slack_id = slack_cfg["pessoa_slack_id"]
     linhas_semana = []
-    for c in semana_calls[:cap]:
+    for c in semana_calls:
         dd, mm = c["data"][8:10], c["data"][5:7]
         mention = mention_for(c["agendadoPor"], pessoa_slack_id)
         linhas_semana.append(f"- {dd}/{mm} · {c['empresa']} · Agendada por: {mention}")
     if not linhas_semana:
         linhas_semana = ["_nenhuma call programada para esta semana_"]
-    restantes = len(semana_calls) - cap
-    if restantes > 0:
-        linhas_semana.append(f"+ {restantes} outras no painel")
 
     header = f"📊 *Pré-vendas — Weekly Report*\n📅 {data_disparo_label(hoje)}"
 
@@ -97,15 +97,15 @@ def build_weekly_report(mes_key, state, taxonomia, feriados_set, hoje, slack_cfg
         _divider(),
         _section(
             "*🎯 Meta do mês (pré-vendas)*\n"
-            f"{hero} realizada(s) de {meta} (MTD: {round(expected)}) — {st['emoji']} {pct_mtd}%\n"
+            f"{hero} realizada{_s(hero)} de {meta} (MTD: {round(expected)}) — {st['emoji']} {pct_mtd}%\n"
             f"{bar}"
         ),
         _section(
             "*📊 Projeção do mês (pré-vendas)*\n"
-            f"{n_agendadas} agendadas ({hero} realizada(s) + {m['presalesAr']} a realizar)\n"
+            f"{n_agendadas} agendadas ({hero} realizada{_s(hero)} + {m['presalesAr']} a realizar)\n"
             + (
-                f"⏰ Faltam {faltam} call{'s' if faltam != 1 else ''} e "
-                f"restam {dias_restantes} dia{'s' if dias_restantes != 1 else ''} úteis"
+                f"⏰ Faltam {faltam} call{_s(faltam)} e "
+                f"restam {dias_restantes} dia{_s(dias_restantes)} úteis"
                 if faltam > 0
                 else "⏰ Meta coberta pelo agendado"
             )

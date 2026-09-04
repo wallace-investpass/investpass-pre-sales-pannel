@@ -26,6 +26,23 @@ Comandos:
       mais recente salvo). --push também faz commit + push de docs/
       automaticamente, publicando a atualização (seção 13 do CLAUDE.md).
 
+  report-semanal [--mes YYYY-MM] [--dry-run]
+      Publica o Weekly Report de pré-vendas no canal do Slack (spec-
+      prevendas-reports.md). Roda via GitHub Actions toda segunda 8h
+      (horário de Brasília). --mes força o mês reportado (default: mês
+      corrente). --dry-run imprime o payload Block Kit em vez de postar.
+      Exige a env var SLACK_BOT_TOKEN.
+
+  fechamento-mensal [--mes YYYY-MM] [--dry-run]
+      Publica o Fechamento Mensal de pré-vendas no canal do Slack. Roda via
+      GitHub Actions todo dia 1, 8h (horário de Brasília). --mes força o
+      mês reportado (default: mês anterior ao corrente). Exige a env var
+      SLACK_BOT_TOKEN.
+
+  test-slack
+      Valida SLACK_BOT_TOKEN (auth.test) e manda uma DM de teste pro dono
+      do painel — não posta no canal público. Uso manual/dev.
+
 Exemplos:
   python3 cli.py import calls.txt --mes 2026-09
   echo "Empresa — 10/09 — CONARH — WhatsApp (Agendada por @Vinicius Almeida)" | python3 cli.py import - --mes 2026-09
@@ -35,9 +52,11 @@ Exemplos:
 """
 import argparse
 import datetime
+import os
 import subprocess
 import sys
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -46,14 +65,38 @@ from src import store
 from src import metrics as metrics_mod
 from src import dashboard as dashboard_mod
 from src import taxonomy as tax
+from src import calc as calc_mod
+from src import reports as reports_mod
+from src import slack as slack_mod
 
 REPO_ROOT = Path(__file__).resolve().parent
 DOCS_DIR = REPO_ROOT / "docs"
+BRASILIA_TZ = ZoneInfo("America/Sao_Paulo")
 
 
 def current_mes():
     hoje = datetime.date.today()
     return f"{hoje.year:04d}-{hoje.month:02d}"
+
+
+def hoje_brasilia():
+    """'Hoje' dos jobs de report é o relógio de Brasília, não o do runner do
+    cron (que roda em UTC) — spec-prevendas-reports.md, seção 3."""
+    return datetime.datetime.now(BRASILIA_TZ).date()
+
+
+def mes_anterior(hoje):
+    primeiro_dia_atual = hoje.replace(day=1)
+    ultimo_dia_anterior = primeiro_dia_atual - datetime.timedelta(days=1)
+    return f"{ultimo_dia_anterior.year:04d}-{ultimo_dia_anterior.month:02d}"
+
+
+def _slack_token():
+    token = os.environ.get("SLACK_BOT_TOKEN")
+    if not token:
+        print("erro: variável de ambiente SLACK_BOT_TOKEN não configurada.")
+        sys.exit(1)
+    return token
 
 
 def cmd_import(args):
@@ -178,6 +221,88 @@ def _git_publish(mes_atual):
     print("publicado no GitHub Pages (commit + push feitos).")
 
 
+def _run_report(mes, hoje, builder_fn, tipo_label, args):
+    """Fluxo comum aos dois reports de Slack (decidido em 2026-09-03, fora
+    da spec original):
+    - Se data/{mes}.json não existir: não posta no canal, manda DM de aviso
+      pro dono e loga o erro.
+    - Se o post no canal falhar (mesmo após retry com backoff, ver
+      src/slack.py): manda DM de erro pro dono e loga.
+    """
+    slack_cfg = tax.load_slack_reports_config()
+    token = None if args.dry_run else _slack_token()
+
+    if not store.month_file(mes).exists():
+        msg = f"⚠️ O {tipo_label} de Pré-vendas não saiu hoje — arquivo data/{mes}.json não existe."
+        print(f"erro: {msg}")
+        if args.dry_run:
+            print("(dry-run: DM de aviso não enviada)")
+        else:
+            slack_mod.notify_owner(token, slack_cfg["owner_user_id"], msg)
+        sys.exit(1)
+
+    state = store.load_month(mes)
+    taxonomia = tax.load_taxonomia()
+    feriados = set(tax.load_feriados())
+
+    blocks, fallback = builder_fn(mes, state, taxonomia, feriados, hoje, slack_cfg)
+
+    if args.dry_run:
+        import json as _json
+        print(_json.dumps(blocks, ensure_ascii=False, indent=2))
+        print(f"\n(fallback text: {fallback})")
+        return
+
+    try:
+        slack_mod.post_message(token, slack_cfg["channel_id"], fallback, blocks=blocks)
+        print(f"{tipo_label} publicado no canal {slack_cfg['channel_id']}.")
+    except slack_mod.SlackError as e:
+        erro_msg = f"❌ O {tipo_label} de Pré-vendas falhou ao publicar no canal: {e}"
+        print(f"erro: {erro_msg}")
+        slack_mod.notify_owner(token, slack_cfg["owner_user_id"], erro_msg)
+        sys.exit(1)
+
+
+def cmd_report_semanal(args):
+    hoje = hoje_brasilia()
+    mes = args.mes or f"{hoje.year:04d}-{hoje.month:02d}"
+    _run_report(mes, hoje, reports_mod.build_weekly_report, "Weekly Report", args)
+
+
+def cmd_fechamento_mensal(args):
+    hoje = hoje_brasilia()
+    mes = args.mes or mes_anterior(hoje)
+    _run_report(mes, hoje, reports_mod.build_fechamento_mensal, "Fechamento Mensal", args)
+
+
+def cmd_test_slack(args):
+    """Valida que SLACK_BOT_TOKEN está configurado e que o bot consegue
+    autenticar e mandar DM — sem tocar no canal público de reports."""
+    token = _slack_token()
+    slack_cfg = tax.load_slack_reports_config()
+
+    try:
+        info = slack_mod.auth_test(token)
+    except slack_mod.SlackError as e:
+        print(f"erro: auth.test falhou — token inválido ou sem permissão: {e}")
+        sys.exit(1)
+
+    print(f"auth.test ok: team={info.get('team')} user={info.get('user')} bot_id={info.get('bot_id')}")
+
+    owner = slack_cfg["owner_user_id"]
+    try:
+        slack_mod.post_message(
+            token, owner,
+            f"✅ Teste de conexão do bot de reports de pré-vendas — tudo certo (workspace: {info.get('team')}).",
+            retries=1,
+        )
+    except slack_mod.SlackError as e:
+        print(f"erro: consegui autenticar, mas a DM pro dono ({owner}) falhou: {e}")
+        sys.exit(1)
+
+    print(f"DM de teste enviada com sucesso para {owner}.")
+
+
 def main():
     p = argparse.ArgumentParser(description="Painel de pré-vendas investPass")
     sub = p.add_subparsers(dest="comando", required=True)
@@ -206,6 +331,19 @@ def main():
     p_gerar.add_argument("--mes", help="YYYY-MM que abre selecionado por padrão (default: mês mais recente salvo)")
     p_gerar.add_argument("--push", action="store_true", help="commit + push automático de docs/ (publica no GitHub Pages)")
     p_gerar.set_defaults(func=cmd_gerar)
+
+    p_semanal = sub.add_parser("report-semanal", help="gera e publica o Weekly Report de pré-vendas no Slack")
+    p_semanal.add_argument("--mes", help="YYYY-MM (default: mês corrente, horário de Brasília)")
+    p_semanal.add_argument("--dry-run", action="store_true", help="imprime o payload Block Kit em vez de postar no Slack")
+    p_semanal.set_defaults(func=cmd_report_semanal)
+
+    p_fechamento = sub.add_parser("fechamento-mensal", help="gera e publica o Fechamento Mensal de pré-vendas no Slack")
+    p_fechamento.add_argument("--mes", help="YYYY-MM (default: mês anterior ao corrente, horário de Brasília)")
+    p_fechamento.add_argument("--dry-run", action="store_true", help="imprime o payload Block Kit em vez de postar no Slack")
+    p_fechamento.set_defaults(func=cmd_fechamento_mensal)
+
+    p_test_slack = sub.add_parser("test-slack", help="valida SLACK_BOT_TOKEN (auth.test + DM de teste pro dono, sem tocar no canal público)")
+    p_test_slack.set_defaults(func=cmd_test_slack)
 
     args = p.parse_args()
     args.func(args)

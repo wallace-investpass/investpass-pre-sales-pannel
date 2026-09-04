@@ -1,0 +1,23 @@
+name: Pré-vendas — Fechamento Mensal
+
+on:
+  schedule:
+    # 8h de Brasília (UTC-3) = 11h UTC, todo dia 1 do mês (corrido).
+    - cron: "0 11 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  fechamento-mensal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Publica o Fechamento Mensal no Slack
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: python3 cli.py fechamento-mensal

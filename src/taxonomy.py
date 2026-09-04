@@ -21,6 +21,13 @@ def load_feriados():
     return sorted(todos)
 
 
+def load_slack_reports_config():
+    """Config dos jobs de report do Slack (canal, dono, mapeamento pessoa →
+    Slack User ID) — spec-prevendas-reports.md, seção 4."""
+    with open(CONFIG_DIR / "slack_reports.json", encoding="utf-8") as f:
+        return json.load(f)
+
+
 def _match_canonical(value, canonical_list):
     if value is None:
         return "", False

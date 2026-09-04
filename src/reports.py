@@ -111,12 +111,12 @@ def build_weekly_report(mes_key, state, taxonomia, feriados_set, hoje, slack_cfg
             )
         ),
         _section(
-            "*📈 Total de agendamentos do mês (todos os canais)*\n"
+            "*📈 Total de agendamentos do mês (canais próprios + externos)*\n"
             f"{m['totalGeral']} no total — {m['totalReal']} realizados · "
             f"{m['totalNs']} no-shows · +{m['totalAr']} a realizar"
         ),
         _section(
-            "*🚫 No-show*\n"
+            "*🚫 No-show (meta = 10%)*\n"
             f"Geral: {m['nsTotalPct']}% ({m['totalNs']} de {m['totalReal'] + m['totalNs']}){_ns_flag(m['nsTotalPct'])}\n"
             f"Pré-vendas: {m['nsPvPct']}% ({m['presalesNsCount']} de {m['presalesRealizadasCount']}){_ns_flag(m['nsPvPct'])}"
         ),
@@ -138,20 +138,20 @@ def build_fechamento_mensal(mes_key, state, taxonomia, feriados_set, hoje, slack
     pct = round(ratio * 100)
     bar = render_bar((hero / meta) if meta else 0, st["css"])
 
-    header = f"📆 *Pré-vendas — Fechamento de {mes_label(mes_key, sep='/')}*"
+    header = f"📊 *Pré-vendas — Fechamento de {mes_label(mes_key, sep='/')}*"
 
     blocks = [
         _section(f"<!channel>\n{header}"),
         _divider(),
         _section(
-            f"*🎯 Resultado final: {hero}/{meta} reuniões realizadas — {st['emoji']} {pct}%*\n{bar}"
+            f"*🎯 Resultado final (pré-vendas): {hero}/{meta} reuniões realizadas — {st['emoji']} {pct}%*\n{bar}"
         ),
         _section(
-            "*📈 Total de agendamentos*\n"
+            "*📈 Total de agendamentos (canais próprios + externos)*\n"
             f"{m['totalReal'] + m['totalNs']} no total — {m['totalReal']} realizados · {m['totalNs']} no-shows"
         ),
         _section(
-            "*🚫 No-show do mês*\n"
+            "*🚫 No-show do mês (meta = 10%)*\n"
             f"Geral: {m['nsTotalPct']}% ({m['totalNs']} de {m['totalReal'] + m['totalNs']}){_ns_flag(m['nsTotalPct'])}\n"
             f"Pré-vendas: {m['nsPvPct']}% ({m['presalesNsCount']} de {m['presalesRealizadasCount']}){_ns_flag(m['nsPvPct'])}"
         ),

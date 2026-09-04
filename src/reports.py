@@ -48,6 +48,12 @@ def _divider():
     return {"type": "divider"}
 
 
+def _painel_link_section(slack_cfg):
+    """Seção final de link do painel, compartilhada pelos dois reports —
+    usa o formato de link do Slack <url|texto> em vez da URL crua."""
+    return _section(f"🔗 <{slack_cfg['painel_url']}|Clique aqui para acessar o painel completo →>")
+
+
 def build_weekly_report(mes_key, state, taxonomia, feriados_set, hoje, slack_cfg):
     m = calc.month_metrics(mes_key, state, taxonomia, feriados_set, hoje)
     mtd = calc.compute_mtd(mes_key, hoje, feriados_set)
@@ -116,7 +122,7 @@ def build_weekly_report(mes_key, state, taxonomia, feriados_set, hoje, slack_cfg
         ),
         _section(f"*📅 Agendamentos da semana*\n{len(semana_calls)} calls programadas\n" + "\n".join(linhas_semana)),
         _divider(),
-        _section(f"🔗 Painel completo → {slack_cfg['painel_url']}"),
+        _painel_link_section(slack_cfg),
     ]
 
     fallback = f"Pré-vendas Weekly Report — {hero} de {meta} realizadas ({pct_mtd}% do MTD)"
@@ -150,7 +156,7 @@ def build_fechamento_mensal(mes_key, state, taxonomia, feriados_set, hoje, slack
             f"Pré-vendas: {m['nsPvPct']}% ({m['presalesNsCount']} de {m['presalesRealizadasCount']}){_ns_flag(m['nsPvPct'])}"
         ),
         _divider(),
-        _section(f"🔗 Painel completo → {slack_cfg['painel_url']}"),
+        _painel_link_section(slack_cfg),
     ]
 
     fallback = f"Pré-vendas Fechamento de {mes_label(mes_key, sep='/')} — {hero}/{meta} ({pct}%)"

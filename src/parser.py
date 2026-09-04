@@ -17,8 +17,17 @@ SLACK_FIELD_RE = {
     "empresa": re.compile(r'Empresa:\s*(.+)'),
     "origem": re.compile(r'Origem do lead:\s*(.+)'),
     "canal": re.compile(r'Canal de agendamento:\s*(.+)'),
-    "vendedor": re.compile(r'Vendedor:\s*(.+)'),
 }
+
+# Bloco de mensagem do Slack: linha de cabeçalho "Nome [HHhMM]" seguida do marcador
+# "NOVA CALL AGENDADA". O nome do cabeçalho é quem agendou de verdade (agendadoPor) —
+# NÃO o campo "Vendedor" do corpo, que identifica quem vai conduzir a call, um papel
+# diferente (seção 8 do CLAUDE.md, corrigido em 2026-09-04).
+SLACK_MESSAGE_RE = re.compile(
+    r'(?P<header>[^\n]+?)\s*\[\d{1,2}h\d{2}\]\s*\n\s*NOVA CALL AGENDADA'
+    r'(?P<body>.*?)(?=\n[^\n]+?\s*\[\d{1,2}h\d{2}\]\s*\n\s*NOVA CALL AGENDADA|\Z)',
+    re.DOTALL,
+)
 
 
 def _make_call(empresa, data_iso, origem_raw, canal_raw, agendado_por, no_show, raw="", taxonomia=None):
@@ -70,11 +79,11 @@ def parse_compact_line(line, ano=None, taxonomia=None):
     )
 
 
-def parse_slack_block(block, ano=None, taxonomia=None):
+def parse_slack_block(header, body, ano=None, taxonomia=None):
     ano = ano or datetime.date.today().year
     fields = {}
     for key, rx in SLACK_FIELD_RE.items():
-        m = rx.search(block)
+        m = rx.search(body)
         if m:
             fields[key] = m.group(1).strip()
     if "empresa" not in fields or "data" not in fields:
@@ -85,9 +94,7 @@ def parse_slack_block(block, ano=None, taxonomia=None):
     if canal_principal.lower() in ("associada", "associado"):
         canal_principal = "Associados"
 
-    vendedor_raw = fields.get("vendedor", "")
-    nome_match = re.search(r'@([^\]\(]+)', vendedor_raw)
-    agendado_por = nome_match.group(1).strip() if nome_match else vendedor_raw.strip()
+    agendado_por = header.strip()
 
     data_iso = _ddmm_to_iso(fields["data"], ano)
 
@@ -117,13 +124,15 @@ def parse_bulk(text, ano=None, taxonomia=None):
     errors = []
 
     if "NOVA CALL AGENDADA" in text:
-        chunks = text.split("NOVA CALL AGENDADA")[1:]
-        for chunk in chunks:
-            call = parse_slack_block(chunk, ano=ano, taxonomia=taxonomia)
+        matches = list(SLACK_MESSAGE_RE.finditer(text))
+        for m in matches:
+            call = parse_slack_block(m.group("header"), m.group("body"), ano=ano, taxonomia=taxonomia)
             if call:
                 calls.append(call)
             else:
-                errors.append(("slack", chunk.strip()[:160]))
+                errors.append(("slack", m.group(0).strip()[:160]))
+        if len(matches) < text.count("NOVA CALL AGENDADA"):
+            errors.append(("slack", "mensagem sem linha de cabeçalho 'Nome [HHhMM]' antes de NOVA CALL AGENDADA — agendadoPor não pôde ser identificado"))
     else:
         for line in text.splitlines():
             line = line.strip()

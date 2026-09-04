@@ -256,7 +256,7 @@
     {
       "id": "9065d126",
       "empresa": "Service Kleen",
-      "data": "2026-09-04",
+      "data": "2026-09-10",
       "origem": "CONARH",
       "origemReconhecida": true,
       "origemTipo": "propria",
@@ -684,6 +684,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-02T22:39:11"
+    },
+    {
+      "id": "8615ec0a",
+      "empresa": "Scala Data Centers",
+      "data": "2026-09-10",
+      "origem": "LinkedIn Vini",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "WhatsApp",
+      "canalReconhecido": true,
+      "agendadoPor": "Vinicius Almeida",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-04T13:56:35"
     }
   ]
 }

@@ -202,14 +202,14 @@ def _git_publish(mes_atual):
     def run(*cmd):
         return subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
 
-    add = run("git", "add", "docs")
+    add = run("git", "add", "docs", "data")
     if add.returncode != 0:
         print(f"git add falhou: {add.stderr.strip()}")
         return
 
     diff = run("git", "diff", "--cached", "--quiet")
     if diff.returncode == 0:
-        print("nada novo pra publicar (dashboard idêntico ao último commit).")
+        print("nada novo pra publicar (docs/ e data/ idênticos ao último commit).")
         return
 
     msg = f"Atualiza painel — {mes_atual} ({datetime.datetime.now().strftime('%Y-%m-%d %H:%M')})"

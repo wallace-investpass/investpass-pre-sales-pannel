@@ -382,7 +382,7 @@
     {
       "id": "6073b160",
       "empresa": "Rossi Supermercados",
-      "data": "2026-09-11",
+      "data": "2026-09-16",
       "origem": "CONARH",
       "origemReconhecida": true,
       "origemTipo": "propria",
@@ -400,7 +400,7 @@
     {
       "id": "89ea6e74",
       "empresa": "Credits Brasil",
-      "data": "2026-09-11",
+      "data": "2026-09-18",
       "origem": "CONARH",
       "origemReconhecida": true,
       "origemTipo": "propria",
@@ -677,8 +677,8 @@
       "canal": "Ligação",
       "canalReconhecido": true,
       "agendadoPor": "Vinicius Almeida",
-      "status": "a_realizar",
-      "noShow": false,
+      "status": "realizada",
+      "noShow": true,
       "pipedriveId": null,
       "contato": null,
       "cargo": null,

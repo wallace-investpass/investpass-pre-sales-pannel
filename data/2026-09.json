@@ -828,6 +828,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-10T20:08:25"
+    },
+    {
+      "id": "fafb04c9",
+      "empresa": "Cruzeiro do Sul",
+      "data": "2026-09-17",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-14T15:07:33"
     }
   ]
 }

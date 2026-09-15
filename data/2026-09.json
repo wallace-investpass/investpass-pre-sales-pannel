@@ -544,7 +544,7 @@
     {
       "id": "923ca74e",
       "empresa": "Apex Brasil",
-      "data": "2026-09-17",
+      "data": "2026-09-22",
       "origem": "CONARH",
       "origemReconhecida": true,
       "origemTipo": "propria",
@@ -846,6 +846,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-14T15:07:33"
+    },
+    {
+      "id": "c330dcc1",
+      "empresa": "Accenture",
+      "data": "2026-09-28",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-15T08:33:10"
     }
   ]
 }

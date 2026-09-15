@@ -39,6 +39,14 @@ Comandos:
       mês reportado (default: mês anterior ao corrente). Exige a env var
       SLACK_BOT_TOKEN.
 
+  checkin-diario [--mes YYYY-MM] [--dry-run]
+      Manda uma DM diária pro pré-vendedor (Vinicius) com as calls de hoje
+      agendadas por ele — lembrete pra confirmar a agenda com o lead antes
+      da call, evitando no-show. Roda via GitHub Actions dias úteis, 8h
+      (horário de Brasília). --mes só afeta qual arquivo data/*.json é
+      lido (default: mês corrente) — a data usada pro filtro de "hoje" é
+      sempre o dia real. Exige a env var SLACK_BOT_TOKEN.
+
   test-slack
       Valida SLACK_BOT_TOKEN (auth.test) e manda uma DM de teste pro dono
       do painel — não posta no canal público. Uso manual/dev.
@@ -226,16 +234,20 @@ def _git_publish(mes_atual):
     print("publicado no GitHub Pages (commit + push feitos).")
 
 
-def _run_report(mes, hoje, builder_fn, tipo_label, args):
-    """Fluxo comum aos dois reports de Slack (decidido em 2026-09-03, fora
-    da spec original):
+def _run_report(mes, hoje, builder_fn, tipo_label, args, channel=None):
+    """Fluxo comum aos reports de Slack (decidido em 2026-09-03, fora da
+    spec original):
     - Se data/{mes}.json não existir: não posta no canal, manda DM de aviso
       pro dono e loga o erro.
     - Se o post no canal falhar (mesmo após retry com backoff, ver
       src/slack.py): manda DM de erro pro dono e loga.
+    `channel` sobrescreve o destino padrão (slack_cfg["channel_id"], o canal
+    público) — usado pelo checkin-diario, que é uma DM pro pré-vendedor, não
+    um post no canal.
     """
     slack_cfg = tax.load_slack_reports_config()
     token = None if args.dry_run else _slack_token()
+    destino = channel or slack_cfg["channel_id"]
 
     if not store.month_file(mes).exists():
         msg = f"⚠️ O {tipo_label} de Pré-vendas não saiu hoje — arquivo data/{mes}.json não existe."
@@ -259,10 +271,10 @@ def _run_report(mes, hoje, builder_fn, tipo_label, args):
         return
 
     try:
-        slack_mod.post_message(token, slack_cfg["channel_id"], fallback, blocks=blocks)
-        print(f"{tipo_label} publicado no canal {slack_cfg['channel_id']}.")
+        slack_mod.post_message(token, destino, fallback, blocks=blocks)
+        print(f"{tipo_label} publicado em {destino}.")
     except slack_mod.SlackError as e:
-        erro_msg = f"❌ O {tipo_label} de Pré-vendas falhou ao publicar no canal: {e}"
+        erro_msg = f"❌ O {tipo_label} de Pré-vendas falhou ao publicar em {destino}: {e}"
         print(f"erro: {erro_msg}")
         slack_mod.notify_owner(token, slack_cfg["owner_user_id"], erro_msg)
         sys.exit(1)
@@ -278,6 +290,15 @@ def cmd_fechamento_mensal(args):
     hoje = hoje_brasilia()
     mes = args.mes or mes_anterior(hoje)
     _run_report(mes, hoje, reports_mod.build_fechamento_mensal, "Fechamento Mensal", args)
+
+
+def cmd_checkin_diario(args):
+    hoje = hoje_brasilia()
+    mes = args.mes or f"{hoje.year:04d}-{hoje.month:02d}"
+    taxonomia = tax.load_taxonomia()
+    slack_cfg = tax.load_slack_reports_config()
+    presales_slack_id = slack_cfg["pessoa_slack_id"][taxonomia["presales_agendador"]]
+    _run_report(mes, hoje, reports_mod.build_checkin_diario, "Check Diário", args, channel=presales_slack_id)
 
 
 def cmd_test_slack(args):
@@ -378,6 +399,11 @@ def main():
     p_fechamento.add_argument("--mes", help="YYYY-MM (default: mês anterior ao corrente, horário de Brasília)")
     p_fechamento.add_argument("--dry-run", action="store_true", help="imprime o payload Block Kit em vez de postar no Slack")
     p_fechamento.set_defaults(func=cmd_fechamento_mensal)
+
+    p_checkin = sub.add_parser("checkin-diario", help="manda a DM diária pro pré-vendedor com as calls de hoje (dias úteis)")
+    p_checkin.add_argument("--mes", help="YYYY-MM (default: mês corrente, horário de Brasília)")
+    p_checkin.add_argument("--dry-run", action="store_true", help="imprime o payload Block Kit em vez de postar no Slack")
+    p_checkin.set_defaults(func=cmd_checkin_diario)
 
     p_test_slack = sub.add_parser("test-slack", help="valida SLACK_BOT_TOKEN (auth.test + DM de teste pro dono, sem tocar no canal público)")
     p_test_slack.set_defaults(func=cmd_test_slack)

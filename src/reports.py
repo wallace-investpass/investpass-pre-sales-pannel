@@ -1,5 +1,6 @@
-"""Monta os payloads Block Kit dos dois reports de Slack (spec-prevendas-
-reports.md): Weekly Report (toda segunda) e Fechamento Mensal (todo dia 1).
+"""Monta os payloads Block Kit dos reports de Slack de pré-vendas
+(spec-prevendas-reports.md): Weekly Report (toda segunda), Fechamento
+Mensal (todo dia 1) e o Check Diário (DM pro Vinicius, dias úteis).
 Usa src/calc.py para os números — nunca reimplementa MTD/thresholds/no-show
 aqui (seção 2 da spec).
 """
@@ -164,4 +165,43 @@ def build_fechamento_mensal(mes_key, state, taxonomia, feriados_set, hoje, slack
     ]
 
     fallback = f"Pré-vendas Fechamento de {mes_label(mes_key, sep='/')} — {hero}/{meta} ({pct}%)"
+    return blocks, fallback
+
+
+def build_checkin_diario(mes_key, state, taxonomia, feriados_set, hoje, slack_cfg):
+    """DM diária pro pré-vendedor (Vinicius) com as calls de hoje agendadas
+    por ele — lembrete pra confirmar a agenda com o lead e evitar no-show.
+    mes_key/feriados_set não são usados aqui (só pra manter a mesma
+    assinatura de build_weekly_report/build_fechamento_mensal e reutilizar
+    o fluxo comum de _run_report em cli.py)."""
+    hoje_iso = calc.iso_of(hoje)
+    presales_nome = taxonomia["presales_agendador"].strip().lower()
+    data_ddmm = f"{hoje.day:02d}/{hoje.month:02d}"
+
+    calls_hoje = sorted(
+        (
+            c for c in state["calls"]
+            if c.get("data") == hoje_iso
+            and calc.effective_status(c, hoje_iso) == "a_realizar"
+            and calc.is_presales(c, presales_nome)
+        ),
+        key=lambda c: c["empresa"],
+    )
+
+    if calls_hoje:
+        linhas = "\n".join(f"{i}. {c['empresa']}" for i, c in enumerate(calls_hoje, start=1))
+        texto = (
+            f"👋 Fala Vini! Essas são as calls de hoje ({data_ddmm}) que precisam da sua "
+            f"confirmação de agenda com o lead:\n\n{linhas}"
+        )
+        fallback = f"Check diário de pré-vendas — {len(calls_hoje)} call{_s(len(calls_hoje))} hoje"
+    else:
+        texto = (
+            f"👋 Fala Vini! Não tem nenhuma call prevista pra acontecer hoje ({data_ddmm}) e "
+            "que foi agendada por você... Vale a pena você dar um check em como está a sua "
+            "performance em relação a meta do mês. Bora pra cima!"
+        )
+        fallback = "Check diário de pré-vendas — sem calls hoje"
+
+    blocks = [_section(texto)]
     return blocks, fallback

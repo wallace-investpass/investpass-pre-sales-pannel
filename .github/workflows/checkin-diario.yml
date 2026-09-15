@@ -1,0 +1,23 @@
+name: Pré-vendas — Check Diário (Vinicius)
+
+on:
+  schedule:
+    # 8h de Brasília (UTC-3) = 11h UTC, dias úteis (segunda a sexta).
+    - cron: "0 11 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  checkin-diario:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Manda o check diário na DM do pré-vendedor
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: python3 cli.py checkin-diario

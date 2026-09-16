@@ -864,6 +864,42 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-15T08:33:10"
+    },
+    {
+      "id": "09d524e3",
+      "empresa": "Multilog",
+      "data": "2026-09-15",
+      "origem": "Landing Page",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "WhatsApp",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-16T09:56:49"
+    },
+    {
+      "id": "fa7a8df0",
+      "empresa": "7COMm",
+      "data": "2026-09-18",
+      "origem": "CONARH",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "Email",
+      "canalReconhecido": true,
+      "agendadoPor": "Vinicius Almeida",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-16T09:57:43"
     }
   ]
 }

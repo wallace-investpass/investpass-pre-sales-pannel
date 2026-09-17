@@ -972,24 +972,6 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-02T22:39:11"
-    },
-    {
-      "id": "c2ed2ae4",
-      "empresa": "Company Hero",
-      "data": "2026-08-31",
-      "origem": "Lista Fria",
-      "origemReconhecida": true,
-      "origemTipo": "propria",
-      "canal": "Ligação",
-      "canalReconhecido": true,
-      "agendadoPor": "Vinicius Almeida",
-      "status": "realizada",
-      "noShow": true,
-      "pipedriveId": null,
-      "contato": null,
-      "cargo": null,
-      "raw": "",
-      "criadoEm": "2026-09-02T22:39:11"
     }
   ]
 }

@@ -36,6 +36,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-10T20:08:25"
+    },
+    {
+      "id": "922c1d10",
+      "empresa": "Rede Ancora",
+      "data": "2026-10-06",
+      "origem": "CONARH",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "Ligação",
+      "canalReconhecido": true,
+      "agendadoPor": "Vinicius Almeida",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-21T16:38:53"
     }
   ]
 }

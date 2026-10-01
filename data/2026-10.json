@@ -72,6 +72,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-09-02T22:39:11"
+    },
+    {
+      "id": "c330dcc1",
+      "empresa": "Accenture",
+      "data": "2026-10-06",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-09-15T08:33:10"
     }
   ]
 }

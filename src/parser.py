@@ -30,11 +30,24 @@ SLACK_MESSAGE_RE = re.compile(
 )
 
 
-def _make_call(empresa, data_iso, origem_raw, canal_raw, agendado_por, no_show, raw="", taxonomia=None):
+PIPEDRIVE_DEAL_RE = re.compile(r'/deal/(\d+)')
+
+
+def parse_pipedrive_id(texto):
+    """Aceita só o número ou uma URL do Pipedrive (.../deal/3971) e devolve o ID
+    numérico (int) — a URL nunca é persistida. None se não achar."""
+    texto = (texto or "").strip()
+    if texto.isdigit():
+        return int(texto)
+    m = PIPEDRIVE_DEAL_RE.search(texto)
+    return int(m.group(1)) if m else None
+
+
+def _make_call(empresa, data_iso, origem_raw, canal_raw, agendado_por, no_show, raw="", taxonomia=None, pipedrive_id=None):
     """Só persiste os campos que o modelo usa: empresa, data, origem, canal,
-    agendado por, no-show. Contato/cargo/pipedriveId NUNCA são capturados aqui —
-    data/*.json é público, e esses campos não têm uso na fórmula/dashboard
-    (seção 8 do CLAUDE.md)."""
+    agendado por, no-show e pipedriveId (só o número do deal — não é dado
+    pessoal). Contato/cargo/URL NUNCA são capturados aqui — data/*.json é
+    público (seção 8 do CLAUDE.md)."""
     taxonomia = taxonomia or tax.load_taxonomia()
     origem, origem_ok = tax.normalize_origem(origem_raw, taxonomia)
     canal, canal_ok = tax.normalize_canal(canal_raw, taxonomia)
@@ -50,6 +63,7 @@ def _make_call(empresa, data_iso, origem_raw, canal_raw, agendado_por, no_show, 
         "agendadoPor": agendado_por.strip(),
         "status": "realizada" if no_show else "a_realizar",
         "noShow": bool(no_show),
+        "pipedriveId": pipedrive_id,
         "raw": raw.strip(),
         "criadoEm": datetime.datetime.now().isoformat(timespec="seconds"),
     }
@@ -110,6 +124,7 @@ def parse_slack_block(header, body, ano=None, taxonomia=None):
         no_show=False,
         raw="",
         taxonomia=taxonomia,
+        pipedrive_id=parse_pipedrive_id(body.split("Link do Pipedrive:", 1)[1]) if "Link do Pipedrive:" in body else None,
     )
 
 

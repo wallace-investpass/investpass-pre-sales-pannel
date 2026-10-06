@@ -11,6 +11,11 @@ Comandos:
       Marca uma call como no-show (status vira 'realizada', noShow=true).
       Desambiguação por empresa + --data quando há mais de uma call.
 
+  pipedrive <empresa> --mes YYYY-MM --id <URL|número> [--data DD/MM]
+      Associa o ID do deal do Pipedrive a uma call já existente (empresa +
+      --data pra desambiguar). Aceita a URL do deal ou só o número; persiste
+      só o número em pipedriveId (a URL nunca é gravada).
+
   mudar-data <empresa> --mes YYYY-MM --nova-data DD/MM [--data-atual DD/MM] [--ano YYYY]
       Atualiza a data de uma call. Se a nova data cair em outro mês, a call é
       movida para a lista mestra desse mês.
@@ -147,6 +152,19 @@ def cmd_no_show(args):
         print(f"erro: {erro}")
         sys.exit(1)
     print(f"no-show marcado: {call['empresa']} ({call['data']})")
+
+
+def cmd_pipedrive(args):
+    mes = args.mes or current_mes()
+    pid = call_parser.parse_pipedrive_id(args.id)
+    if pid is None:
+        print("erro: não achei um ID numérico em --id (use o número ou a URL .../deal/<número>).")
+        sys.exit(1)
+    call, erro = store.set_pipedrive_id(mes, args.empresa, pid, data=_ddmm_para_iso(args.data, mes))
+    if erro:
+        print(f"erro: {erro}")
+        sys.exit(1)
+    print(f"pipedriveId={pid} associado: {call['empresa']} ({call['data']})")
 
 
 def cmd_mudar_data(args):
@@ -376,6 +394,13 @@ def main():
     p_ns.add_argument("--mes", help="YYYY-MM (default: mês atual)")
     p_ns.add_argument("--data", help="DD/MM, para desambiguar se a empresa tiver mais de uma call")
     p_ns.set_defaults(func=cmd_no_show)
+
+    p_pd = sub.add_parser("pipedrive", help="associa o ID do deal do Pipedrive a uma call existente")
+    p_pd.add_argument("empresa")
+    p_pd.add_argument("--mes", help="YYYY-MM (default: mês atual)")
+    p_pd.add_argument("--data", help="DD/MM, para desambiguar se a empresa tiver mais de uma call")
+    p_pd.add_argument("--id", required=True, help="URL do deal ou só o número")
+    p_pd.set_defaults(func=cmd_pipedrive)
 
     p_md = sub.add_parser("mudar-data", help="muda a data de uma call")
     p_md.add_argument("empresa")

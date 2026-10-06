@@ -26,6 +26,7 @@ def _call_payload(c, presales_nome, taxonomia):
         "presales": presales_nome in c["agendadoPor"].strip().lower(),
         "status": c["status"],
         "noShow": bool(c["noShow"]),
+        "pipedriveId": c.get("pipedriveId"),
     }
 
 

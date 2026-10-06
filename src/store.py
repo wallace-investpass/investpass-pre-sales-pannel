@@ -74,8 +74,8 @@ def add_calls_bulk(mes, calls):
 
 
 def find_calls(mes, empresa, data=None):
-    """Desambiguação é sempre por empresa + data — não há pipedriveId persistido
-    (seção 8 do CLAUDE.md: descartado deliberadamente no parsing)."""
+    """Desambiguação é sempre por empresa + data (o pipedriveId pode estar vazio
+    em calls antigas, seção 8 do CLAUDE.md)."""
     state = load_month(mes)
     matches = []
     empresa_norm = empresa.strip().lower()
@@ -135,3 +135,15 @@ def change_date(mes, empresa, nova_data_ddmm, ano=None, data_atual=None):
 
     save_month(state)
     return call, mes, None
+
+
+def set_pipedrive_id(mes, empresa, pipedrive_id, data=None):
+    state, matches = find_calls(mes, empresa, data)
+    if len(matches) == 0:
+        return None, "nenhuma call encontrada"
+    if len(matches) > 1:
+        return None, _ambiguous_msg(matches, "--data")
+    call = matches[0]
+    call["pipedriveId"] = pipedrive_id
+    save_month(state)
+    return call, None

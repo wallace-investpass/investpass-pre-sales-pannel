@@ -52,6 +52,11 @@ def render(payload, generated_at=""):
       <button class="tab active" data-tab="mensal" onclick="switchTab('mensal')">Detalhe mensal</button>
       <button class="tab" data-tab="historico" onclick="switchTab('historico')">Histórico</button>
     </div>
+    <div class="ctrls">
+    <div class="scope-seg" id="scope">
+      <button type="button" data-s="pv" onclick="setScope('pv')">Pré-vendas</button>
+      <button type="button" data-s="time" onclick="setScope('time')">Time</button>
+    </div>
     <div class="month-dropdown" id="month-dropdown">
       <button type="button" class="month-dropdown-btn" id="month-dropdown-btn" onclick="toggleMonthDropdown()">
         <span id="month-dropdown-label">{default_label}</span>
@@ -61,6 +66,7 @@ def render(payload, generated_at=""):
         {options_html}
       </div>
     </div>
+    </div>
   </div>
 
   <div id="view-mensal">
@@ -68,53 +74,9 @@ def render(payload, generated_at=""):
       <span class="mtd-line" id="m-mtdline"></span>
     </div>
 
-    <div class="card">
-      <div class="hero-top">
-        <div>
-          <p class="hero-label" id="m-hero-label"></p>
-          <div class="hero-number">
-            <span class="big" id="m-hero-big"></span>
-            <span class="badge" id="m-badge"></span>
-          </div>
-        </div>
-        <div class="proj-box" id="m-proj-box">
-          <p class="p-label" id="m-proj-label">Projeção final do mês</p>
-          <p class="p-value" id="m-proj-value"></p>
-          <p class="p-sub" id="m-proj-sub"></p>
-          <p class="p-remaining" id="m-proj-remaining" hidden></p>
-        </div>
-      </div>
-      <div class="bar-outer">
-        <div class="bar-fill" id="m-bar-fill"></div>
-        <div class="bar-fill-ar" id="m-bar-fill-ar"></div>
-        <div class="bar-marker" id="m-bar-marker"><span class="m-label" id="m-bar-marker-label"></span></div>
-      </div>
-    </div>
-
-    <div class="summary-grid" id="m-summary-grid">
-      <div class="card metric-card" id="m-card-ar-wrap">
-        <p class="label">Agendamentos à realizar no mês</p>
-        <div class="value-row"><p class="value" id="m-card-ar"></p></div>
-        <p class="sub" id="m-card-ar-sub"></p>
-      </div>
-      <div class="card metric-card">
-        <p class="label">No-show (meta 10%)</p>
-        <div class="twin">
-          <div><p class="value" id="m-ns-total"></p><p class="sub">total</p></div>
-          <div><p class="value" id="m-ns-pv"></p><p class="sub">pré-vendas</p></div>
-        </div>
-      </div>
-      <div class="card metric-card">
-        <p class="label">Total de agendamentos (canais próprios)</p>
-        <div class="value-row"><p class="value" id="m-card-propria"></p></div>
-        <p class="sub" id="m-card-propria-sub"></p>
-      </div>
-      <div class="card metric-card">
-        <p class="label">Total de agendamentos (canais próprios + externos)</p>
-        <div class="value-row"><p class="value" id="m-card-total"></p></div>
-        <p class="sub" id="m-card-total-sub"></p>
-      </div>
-    </div>
+    <div id="m-strip"></div>
+    <div id="m-hero"></div>
+    <div id="m-cards"></div>
 
     <div class="seg-grid">
       <div class="card seg-card">
@@ -137,7 +99,9 @@ def render(payload, generated_at=""):
       </div>
     </div>
 
-    <div class="card people-card">
+    <div id="m-actions"></div>
+
+    <div class="card people-card" id="m-people-card">
       <p class="title">👤 Agendamentos por pessoa</p>
       <div id="m-pessoa"></div>
       <div class="p-legend">
@@ -156,7 +120,7 @@ def render(payload, generated_at=""):
       <p class="title">Taxa de no-show MoM</p>
       <div id="chart-noshow"></div>
       <div class="legend">
-        <span><span class="line-swatch" style="background:var(--text-secondary);"></span>No-show total</span>
+        <span id="leg-ns-total"><span class="line-swatch" style="background:var(--text-secondary);"></span>No-show total</span>
         <span><span class="line-swatch" style="background:var(--g-dark);"></span>No-show pré-vendas</span>
         <span><span class="line-swatch dashed" style="border-top-color:#c9a29c;"></span>meta de no-show: 10%</span>
       </div>
@@ -166,7 +130,7 @@ def render(payload, generated_at=""):
       <div id="chart-meta"></div>
       <div class="legend">
         <span><span class="dot" style="background:var(--g-dark);"></span>Agendado pela pré-vendas</span>
-        <span><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>Sem envolvimento de pré-vendas</span>
+        <span id="leg-sem-pv"><span class="dot" style="background:var(--g-pale); border:0.5px solid var(--border);"></span>Sem envolvimento de pré-vendas</span>
         <span><span class="line-swatch dashed" style="border-top-color:#a9a89f;"></span><span id="chart-meta-goal-legend"></span></span>
       </div>
     </div>
@@ -180,7 +144,7 @@ def render(payload, generated_at=""):
       <div id="chart-canal"></div>
       <div class="legend" id="chart-canal-legend"></div>
     </div>
-    <div class="card hist-card">
+    <div class="card hist-card" id="hist-pessoa-card">
       <p class="title">Performance por Pessoa MoM</p>
       <div id="chart-pessoa"></div>
       <div class="legend" id="chart-pessoa-legend"></div>
@@ -243,36 +207,30 @@ CSS = '''
   .header-row .mtd-line { font-size:12px; color:var(--text-muted); }
 
   .card { background:var(--surface-1); border:0.5px solid var(--border); border-radius:12px; padding:18px 20px; margin-bottom:14px; }
-  .hero-top { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-  .hero-label { font-size:11.5px; font-weight:600; color:var(--text-secondary); letter-spacing:0.02em; text-transform:uppercase; margin:0 0 6px; }
-  .hero-number { display:flex; align-items:baseline; gap:10px; }
-  .hero-number .big { font-size:60px; font-weight:600; line-height:1; }
+  .hero { display:grid; grid-template-columns:minmax(260px,1fr) 1.6fr; gap:26px; align-items:start; }
+  .hero-left { display:flex; flex-direction:column; align-items:flex-start; }
+  .hero-label { font-size:11.5px; font-weight:600; color:var(--text-secondary); letter-spacing:0.02em; text-transform:uppercase; margin:0 0 14px; line-height:1.4; }
+  .hero-num { font-size:72px; font-weight:600; line-height:1; margin:0 0 12px; }
   .badge { padding:5px 12px; border-radius:8px; font-size:12.5px; font-weight:600; white-space:nowrap; }
   .badge-green { background:var(--green-bg); color:var(--green-text); }
   .badge-amber { background:var(--amber-bg); color:var(--amber); }
   .badge-red { background:var(--red-bg); color:var(--red); }
-  .proj-box { background:var(--surface-0); border-radius:10px; padding:10px 14px; min-width:170px; border:0.5px solid var(--border); }
-  .proj-box .p-label { font-size:11px; color:var(--text-muted); margin:0 0 3px; }
-  .proj-box .p-value { font-size:18px; font-weight:600; margin:0; color:var(--text-primary); }
-  .proj-box .p-sub { font-size:11px; color:var(--text-muted); margin:3px 0 0; }
-  .proj-box .p-remaining { font-size:11px; color:var(--text-primary); margin:8px 0 0; padding-top:8px; border-top:0.5px solid var(--border); }
-  .proj-box .p-remaining:not([hidden]) { display:flex; align-items:center; gap:6px; }
-  .proj-box .p-remaining b { font-weight:700; }
-  .bar-outer { position:relative; height:14px; border-radius:7px; background:var(--surface-0); margin-top:40px; transition:box-shadow 150ms ease; }
-  .bar-outer:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
-  .bar-fill { position:absolute; left:0; top:0; height:100%; border-radius:7px 0 0 7px; }
-  .bar-fill.bar-green { background:var(--brand-green); }
-  .bar-fill.bar-amber { background:#e0a838; }
-  .bar-fill.bar-red { background:var(--red); }
-  .bar-fill-ar { position:absolute; top:0; height:100%; }
-  .bar-fill-ar.bar-green { background:#a8ecc0; }
-  .bar-fill-ar.bar-amber { background:#f3d99b; }
-  .bar-fill-ar.bar-red { background:#f0b3ac; }
-  .bar-marker { position:absolute; top:-9px; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:9px solid var(--text-primary); transform:translateX(-6px); }
-  .bar-marker .m-label { position:absolute; top:-24px; left:50%; transform:translateX(-50%); font-size:10px; font-weight:600; color:var(--text-secondary); white-space:nowrap; }
+  .meta-line { font-size:12px; color:var(--text-secondary); margin:12px 0 0; }
+  .chart-wrap svg { display:block; }
+  .strip { display:flex; align-items:center; justify-content:space-between; gap:20px; transition:box-shadow 150ms ease; }
+  .strip:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
+  .strip .s-label { font-size:11px; color:var(--text-muted); margin:0 0 2px; }
+  .strip .s-val { font-size:28px; font-weight:600; margin:0; line-height:1.1; }
+  .strip .s-sub { font-size:12px; color:var(--text-secondary); margin:2px 0 0; }
+  .strip .s-items { display:flex; flex-direction:column; gap:6px; font-size:13px; }
+  .strip .s-items b { font-weight:700; }
+  .strip .s-covered { font-size:13px; }
 
-  .summary-grid { display:grid; gap:12px; margin-bottom:14px; grid-template-columns:repeat(4,1fr); }
-  .summary-grid.cols-3 { grid-template-columns:repeat(3,1fr); }
+  .ctrls { display:flex; align-items:center; gap:10px; }
+  .scope-seg { display:inline-flex; background:var(--surface-1); border:0.5px solid var(--border); border-radius:9px; padding:3px; }
+  .scope-seg button { border:none; background:none; padding:6px 14px; border-radius:7px; font:600 12.5px 'Montserrat',sans-serif; color:var(--text-muted); cursor:pointer; }
+  .scope-seg button.on { background:var(--text-primary); color:#fff; }
+  .summary-grid { display:grid; gap:12px; margin-bottom:14px; grid-template-columns:repeat(var(--cols,4),1fr); }
   .card.metric-card { transition:box-shadow 150ms ease; display:flex; flex-direction:column; }
   .card.metric-card:hover { box-shadow:0 0 0 1px #d8d6cb, 0 4px 14px rgba(26,26,24,.08); }
   .metric-card .label { font-size:12px; color:var(--text-secondary); margin:0 0 6px; font-weight:600; min-height:48px; }
@@ -280,6 +238,8 @@ CSS = '''
   .metric-card .value { font-size:30px; font-weight:500; margin:0; }
   .metric-card .value.red { color:var(--red); }
   .metric-card .sub { font-size:11px; color:var(--text-muted); margin:6px 0 0; }
+  .vline { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .vline .vs { font-size:11.5px; color:var(--text-muted); }
   .twin { flex:1; display:flex; justify-content:space-between; align-items:center; gap:18px; }
 
   .seg-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
@@ -306,6 +266,11 @@ CSS = '''
   table.calls-table tbody tr:last-child td { border-bottom:none; }
   .ns-tag { background:var(--red-bg); color:var(--red); font-size:10px; padding:1px 6px; border-radius:5px; margin-left:6px; }
   .today-tag { background:#fdead9; color:#c1620a; font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; padding:1px 6px; border-radius:5px; margin-left:6px; }
+  .nsre-tag { background:#e3eefb; color:#185fa5; font-size:10px; padding:1px 6px; border-radius:5px; margin-left:6px; white-space:nowrap; }
+  .plink { color:#185fa5; text-decoration:none; font-weight:500; }
+  .plink.off { color:#b9b8ae; cursor:default; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+  .two-col .card { margin-bottom:0; }
   .badge-presales { background:var(--blue-bg); color:var(--blue); font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.02em; padding:1px 6px; border-radius:5px; margin-left:6px; white-space:nowrap; }
 
   .people-card .title { font-size:13px; font-weight:600; margin:0 0 10px; }
@@ -340,8 +305,8 @@ CSS = '''
   #view-historico { display:none; }
 
   @media (max-width:860px) {
-    .summary-grid, .summary-grid.cols-3 { grid-template-columns:1fr 1fr; }
-    .seg-grid { grid-template-columns:1fr; }
+    .summary-grid { grid-template-columns:1fr 1fr; }
+    .seg-grid, .hero, .two-col { grid-template-columns:1fr; }
   }
 '''
 
@@ -450,82 +415,166 @@ function triBreakdown(chave, universo){
   return linhas;
 }
 
-function computeMonthView(mesKey, raw, hojeIso, feriadosSet){
+function normName(s){
+  return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+// Todas as calls de todos os meses carregados, de qualquer agendador — a busca
+// de reagendamento (seção 5) nunca usa o filtro de escopo.
+let ALL_CALLS = [];
+function buildAllCalls(){
+  ALL_CALLS = [];
+  Object.keys(MONTHS).forEach(k => MONTHS[k].calls.forEach(c => {
+    if (c.data) ALL_CALLS.push({ nome: normName(c.empresa), data: c.data, pid: c.pipedriveId || null });
+  }));
+}
+
+// Data (ISO) da primeira call posterior da mesma empresa, ou null. Dois deals
+// com pipedriveId diferentes são oportunidades distintas — não conta.
+function reagendamentoDe(c){
+  if (!c.data) return null;
+  const nome = normName(c.empresa);
+  let melhor = null;
+  ALL_CALLS.forEach(o => {
+    if (o.nome !== nome || o.data <= c.data) return;
+    if (c.pipedriveId && o.pid && c.pipedriveId !== o.pid) return;
+    if (melhor === null || o.data < melhor) melhor = o.data;
+  });
+  return melhor;
+}
+
+function bizDayList(inicio, fim, feriadosSet){
+  const out = [];
+  const d = new Date(inicio);
+  while (d <= fim) {
+    if (d.getDay() !== 0 && d.getDay() !== 6 && !feriadosSet.has(isoOf(d))) out.push(isoOf(d));
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+
+function statusOf(ratio){
+  if (ratio > 0.9) return { css: 'green', label: '🟢' };
+  if (ratio >= 0.7) return { css: 'amber', label: '🟡' };
+  return { css: 'red', label: '🔴' };
+}
+
+const pct = (n, d) => d ? Math.round((n / d) * 100) : 0;
+
+function callRow(c, hojeIso){
+  return {
+    data: ddmmOrDash(c.data), iso: c.data, empresa: c.empresa,
+    origem: c.origem || '—', canal: c.canal || '—',
+    pessoa: c.agendadoPor, presales: !!c.presales,
+    noShow: !!c.noShow, hoje: c.data === hojeIso,
+    pid: c.pipedriveId || null,
+    resched: c.noShow ? reagendamentoDe(c) : null,
+  };
+}
+
+function computeMonthView(mesKey, raw, hojeIso, feriadosSet, scope){
   const calls = raw.calls.map(c => effectiveCall(c, hojeIso));
   const meta = raw.meta;
 
   const totalARealizar = calls.filter(c => c.status === 'a_realizar');
   const closed = totalARealizar.length === 0;
 
-  const presalesCalls = calls.filter(c => c.presales);
-  const presalesRealizadas = presalesCalls.filter(c => c.status === 'realizada');
-  const presalesNs = presalesRealizadas.filter(c => c.noShow);
-  const presalesAr = presalesCalls.filter(c => c.status === 'a_realizar').length;
-  const presalesRealTotal = presalesRealizadas.length - presalesNs.length;
+  // Hero e faixa de projeção: sempre o número do pré-vendas (agendado pelo
+  // Vinicius, qualquer origem), nos dois escopos.
+  const pvc = calls.filter(c => c.presales);
+  const pvRealizadas = pvc.filter(c => c.status === 'realizada');
+  const pvNs = pvRealizadas.filter(c => c.noShow);
+  const pvAr = pvc.filter(c => c.status === 'a_realizar');
+  const prevendasReal = pvRealizadas.length - pvNs.length;
 
   const isPropria = c => c.origemTipo === 'propria';
-  const propriaCalls = calls.filter(isPropria);
-  const externaCalls = calls.filter(c => !isPropria(c));
-  const propriaRealTotal = propriaCalls.filter(c => c.status === 'realizada' && !c.noShow).length;
-  const propriaNs = propriaCalls.filter(c => c.status === 'realizada' && c.noShow).length;
-  const propriaAr = propriaCalls.filter(c => c.status === 'a_realizar').length;
-  const externaAr = externaCalls.filter(c => c.status === 'a_realizar').length;
-
-  const origemDisponivel = calls.some(c => c.origem);
-  const canalDisponivel = calls.some(c => c.canal);
-
   const totalRealizadas = calls.filter(c => c.status === 'realizada');
   const totalNs = totalRealizadas.filter(c => c.noShow);
-  const nsTotalPct = totalRealizadas.length ? Math.round((totalNs.length / totalRealizadas.length) * 100) : 0;
-  const nsPvPct = presalesRealizadas.length ? Math.round((presalesNs.length / presalesRealizadas.length) * 100) : 0;
+
+  // Disponibilidade de dado é sempre do mês inteiro, nunca do recorte de escopo.
+  const origemDisponivel = calls.some(c => c.origem);
+  const canalDisponivel = calls.some(c => c.canal);
+  const dataDisponivel = calls.every(c => c.data);
+
+  // Universo do escopo: Pré-vendas filtra ANTES de calcular breakdowns/tabelas.
+  const U = scope === 'pv' ? pvc : calls;
+  const propriaU = U.filter(isPropria);
+  const externaU = U.filter(c => !isPropria(c));
+
+  const [inicio, fim] = monthBounds(mesKey);
+  const bdays = bizDayList(inicio, fim, feriadosSet);
+  const hojeDate = parseIso(hojeIso);
+  const mtd = computeMtd(mesKey, hojeDate, feriadosSet);
+  const dec = closed ? bdays.length : Math.min(mtd.diasUteisDecorridos, bdays.length);
 
   const view = {
-    label: raw.label,
-    closed,
-    meta,
-    prevendasReal: presalesRealTotal,
-    pvArealizar: presalesAr,
-    ns: { total: nsTotalPct, pv: nsPvPct },
-    presalesRealTotal,
+    label: raw.label, closed, meta, scope,
+    prevendasReal, pvArealizar: pvAr.length,
+    presalesRealTotal: prevendasReal,
+    ns: { total: pct(totalNs.length, totalRealizadas.length), pv: pct(pvNs.length, pvRealizadas.length) },
+    pvNsCount: pvNs.length, pvRealizadasCount: pvRealizadas.length,
     totalReal: totalRealizadas.length - totalNs.length,
     totalNs: totalNs.length,
     totalAr: totalARealizar.length,
-    propriaRealTotal, propriaNs, propriaAr, externaAr,
-    origemDisponivel, canalDisponivel,
+    propriaRealTotal: calls.filter(c => isPropria(c) && c.status === 'realizada' && !c.noShow).length,
+    propriaNs: calls.filter(c => isPropria(c) && c.status === 'realizada' && c.noShow).length,
+    propriaAr: calls.filter(c => isPropria(c) && c.status === 'a_realizar').length,
+    externaAr: calls.filter(c => !isPropria(c) && c.status === 'a_realizar').length,
+    pvHoje: pvc.filter(c => c.data === hojeIso && !c.noShow).length,
+    origemDisponivel, canalDisponivel, dataDisponivel,
     origem: {
-      'CANAIS PRÓPRIOS': origemDisponivel ? triBreakdown('origem', propriaCalls) : [],
-      'CANAIS EXTERNOS': origemDisponivel ? triBreakdown('origem', externaCalls) : [],
+      'CANAIS PRÓPRIOS': origemDisponivel ? triBreakdown('origem', propriaU) : [],
+      'CANAIS EXTERNOS': origemDisponivel ? triBreakdown('origem', externaU) : [],
     },
-    canal: canalDisponivel ? triBreakdown('canal', calls) : [],
+    canal: canalDisponivel ? triBreakdown('canal', U) : [],
     pessoa: triBreakdown('agendadoPor', calls),
+    hojeIso,
+    mtdLine: closed ? 'Mês encerrado' : '',
+    diasUteisTotal: bdays.length,
+    diasUteisRestantes: bdays.length - dec,
   };
 
-  if (closed) {
-    view.mtdLine = 'Mês encerrado';
-    const todas = [...calls].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-    view.allCalls = todas.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, !!c.noShow, !!c.presales]);
-  } else {
-    const hojeDate = parseIso(hojeIso);
-    const mtd = computeMtd(mesKey, hojeDate, feriadosSet);
+  if (!closed) {
     const cutoffLabel = ddmm(isoOf(mtd.cutoff));
     view.mtdLine = `MTD ${cutoffLabel} · ${mtd.diasUteisDecorridos} de ${mtd.diasUteisTotal} dias úteis (até ${cutoffLabel})`;
     view.expected = mtd.pctMtd * meta;
-    view.diasUteisRestantes = mtd.diasUteisTotal - mtd.diasUteisDecorridos;
-
-    const mesARealizar = [...totalARealizar].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-    const tituloMes = raw.label.replace(' ', '/');
-    view.week = {
-      title: `Pipeline restante do mês (${tituloMes}) · ${mesARealizar.length} calls a realizar`,
-      calls: mesARealizar.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, c.data === hojeIso, !!c.presales]),
-    };
-
-    const mesRealizadas = [...totalRealizadas].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-    view.realized = {
-      title: `Calls já realizadas no mês (${tituloMes}) · ${mesRealizadas.length} calls realizadas (ou que deveriam ter sido)`,
-      calls: mesRealizadas.map(c => [ddmmOrDash(c.data), c.empresa, c.origem || '—', c.canal || '—', c.agendadoPor, !!c.noShow, !!c.presales]),
-    };
   }
 
+  // Curva do hero: eixo X = dias úteis do mês (mesma contagem do MTD).
+  const cleanReal = pvRealizadas.filter(c => !c.noShow && c.data);
+  const arDatadas = pvAr.filter(c => c.data);
+  const n = bdays.length;
+  const cumReal = bdays.map((d, i) => {
+    if (i >= dec) return null;
+    return (dec === n && i === n - 1) ? cleanReal.length : cleanReal.filter(c => c.data <= d).length;
+  });
+  const cumProj = bdays.map((d, i) => {
+    if (i < dec) return cumReal[i];
+    return i === n - 1 ? prevendasReal + pvAr.length : prevendasReal + arDatadas.filter(c => c.data <= d).length;
+  });
+  view.chart = { bdays, dec, cumReal, cumProj };
+
+  const byDate = (a, b) => (a.data || '').localeCompare(b.data || '') || a.empresa.localeCompare(b.empresa);
+  const tituloMes = raw.label.replace(' ', '/');
+  if (closed) {
+    const todas = [...U].sort(byDate);
+    view.allCalls = todas.map(c => callRow(c, hojeIso));
+    view.allTitle = `Todas as calls de ${raw.label}`;
+  } else {
+    const ar = U.filter(c => c.status === 'a_realizar').sort(byDate);
+    view.week = {
+      title: `Pipeline restante do mês (${tituloMes}) · ${ar.length} calls a realizar`,
+      calls: ar.map(c => callRow(c, hojeIso)),
+    };
+    const re = U.filter(c => c.status === 'realizada').sort(byDate);
+    view.realized = {
+      title: `Calls já realizadas no mês (${tituloMes}) · ${re.length} calls realizadas (ou que deveriam ter sido)`,
+      calls: re.map(c => callRow(c, hojeIso)),
+    };
+    // Tabelas de ação (só escopo Pré-vendas, mês aberto).
+    view.pendentes = pvRealizadas.filter(c => c.noShow && !reagendamentoDe(c)).sort(byDate).map(c => callRow(c, hojeIso));
+    view.hoje = pvc.filter(c => c.data === hojeIso && !c.noShow).sort(byDate).map(c => callRow(c, hojeIso));
+  }
   return view;
 }
 
@@ -534,12 +583,15 @@ let VIEWS = {};
 let CURRENT_TODAY = null;
 let ACTIVE_MES = null;
 let ACTIVE_TAB = 'mensal';
+// Escopo (seção 5): Pré-vendas por padrão; ?visao=time abre direto em Time.
+// Não persiste a última escolha. É foco de leitura, não controle de acesso.
+let SCOPE = new URLSearchParams(location.search).get('visao') === 'time' ? 'time' : 'pv';
 
 function recomputeViews(){
   CURRENT_TODAY = todayIso();
   VIEWS = {};
   Object.keys(MONTHS).forEach(key => {
-    VIEWS[key] = computeMonthView(key, MONTHS[key], CURRENT_TODAY, FERIADOS_SET);
+    VIEWS[key] = computeMonthView(key, MONTHS[key], CURRENT_TODAY, FERIADOS_SET, SCOPE);
   });
 }
 
@@ -568,17 +620,13 @@ function pickDefaultMes(){
 
 function initApp(){
   FERIADOS_SET = new Set(FERIADOS);
+  buildAllCalls();
+  document.querySelectorAll('#scope button').forEach(b => b.classList.toggle('on', b.dataset.s === SCOPE));
   recomputeViews();
   const defaultKey = DEFAULT_MES || pickDefaultMes();
   if (defaultKey) renderMonth(defaultKey);
   initTooltips();
   setInterval(checkDayRollover, 60000);
-}
-
-function statusOf(ratio){
-  if (ratio > 0.9) return { css: 'green', label: '🟢' };
-  if (ratio >= 0.7) return { css: 'amber', label: '🟡' };
-  return { css: 'red', label: '🔴' };
 }
 
 function segBar(real, ar, ns){
@@ -588,12 +636,6 @@ function segBar(real, ar, ns){
     <div style="width:${ar/total*100}%; background:var(--g-mid);"></div>
     <div style="width:${ns/total*100}%; background:var(--g-pale);"></div>
   </div>`;
-}
-
-function realizadosSubtext(real, ns, ar){
-  let s = `${real} realizados · ${ns} no-shows`;
-  if (ar > 0) s += ` · +${ar} a realizar`;
-  return s;
 }
 
 function triCountLabel(real, ar, ns, closed){
@@ -610,21 +652,158 @@ function rowsHtml(list, closed){
   }).join('');
 }
 
-function callsTable(rows, mode){
+const STATUS_COLOR = { green: '#0ED555', amber: '#e0a838', red: '#c0392b' };
+
+function heroStatus(m){
+  if (m.closed) {
+    const ratio = m.prevendasReal / m.meta;
+    return { st: statusOf(ratio), text: `${statusOf(ratio).label} ${Math.round(ratio * 100)}% da meta` };
+  }
+  const expected = m.expected || 0;
+  const ratio = expected > 0 ? (m.prevendasReal / expected) : (m.prevendasReal === 0 ? 1 : 2);
+  const st = statusOf(ratio);
+  return { st, text: `${st.label} ${Math.round(ratio * 100)}% do MTD (${Math.round(expected)} agendamentos)` };
+}
+
+function stripHtml(m){
+  if (m.closed) return '';
+  const proj = m.prevendasReal + m.pvArealizar;
+  const faltam = Math.max(0, m.meta - proj);
+  const right = proj >= m.meta
+    ? '<div class="s-covered">Meta coberta pelo agendado</div>'
+    : `<div class="s-items"><div>👨‍💻 Faltam <b>${faltam} call${faltam === 1 ? '' : 's'}</b> para agendar</div><div>📅 Restam <b>${m.diasUteisRestantes} dia${m.diasUteisRestantes === 1 ? '' : 's'} úteis</b> no mês</div></div>`;
+  return `<div class="card strip">
+    <div><p class="s-label">Projeção do mês</p><p class="s-val">${proj} de ${m.meta}</p><p class="s-sub">${m.prevendasReal} realizadas + ${m.pvArealizar} a realizar</p></div>
+    ${right}
+  </div>`;
+}
+
+function heroChartHtml(m, color){
+  if (!m.dataDisponivel) return '<div class="chart-wrap"><p class="week-empty">dado indisponível</p></div>';
+  const { bdays, dec, cumReal, cumProj } = m.chart;
+  const n = bdays.length, META = m.meta;
+  const W = 560, H = 215, L = 30, R = 12, T = 12, B = 26;
+  const projTotal = m.prevendasReal + m.pvArealizar;
+  const top = Math.max(META, m.closed ? m.prevendasReal : projTotal);
+  const stepY = top > 25 ? 10 : 5;
+  const yMax = Math.max(5, Math.ceil(top / stepY) * stepY);
+  const x = i => L + (n > 1 ? i * (W - L - R) / (n - 1) : (W - L - R) / 2);
+  const y = v => T + (H - T - B) * (1 - v / yMax);
+
+  let g = '';
+  for (let v = 0; v <= yMax; v += stepY) {
+    g += `<line x1="${L}" y1="${y(v)}" x2="${W - R}" y2="${y(v)}" stroke="var(--border)" stroke-opacity="0.6" stroke-width="1"/>`;
+    g += `<text x="${L - 6}" y="${y(v) + 3}" font-size="9" fill="var(--text-muted)" text-anchor="end">${v}</text>`;
+  }
+  [0, Math.floor((n - 1) / 2), n - 1].forEach(i => {
+    g += `<text x="${x(i)}" y="${H - 8}" font-size="9.5" fill="var(--text-secondary)" text-anchor="middle">${ddmm(bdays[i])}</text>`;
+  });
+  g += `<polyline points="${bdays.map((d, i) => `${x(i)},${y(META * (i + 1) / n)}`).join(' ')}" fill="none" stroke="#c9c8bf" stroke-width="1.3"/>`;
+
+  if (!m.closed) {
+    const pts = [];
+    for (let i = Math.max(dec - 1, 0); i < n; i++) pts.push(`${x(i)},${y(cumProj[i])}`);
+    g += `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 3" opacity=".6"/>`;
+    g += `<circle cx="${x(n - 1)}" cy="${y(cumProj[n - 1])}" r="2.4" fill="#fff" stroke="${color}" stroke-width="1.4"/>`;
+  }
+  if (dec > 0) {
+    const pts = [];
+    for (let i = 0; i < dec; i++) pts.push(`${x(i)},${y(cumReal[i])}`);
+    g += `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.7"/>`;
+    for (let i = 0; i < dec; i++) g += `<circle cx="${x(i)}" cy="${y(cumReal[i])}" r="2.2" fill="${color}"/>`;
+  }
+  const step = n > 1 ? (W - L - R) / (n - 1) : (W - L - R);
+  for (let i = 0; i < n; i++) {
+    const metaV = (META * (i + 1) / n).toFixed(1).replace('.', ',');
+    const tip = i < dec
+      ? `${ddmm(bdays[i])} · Realizado ${cumReal[i]} · Meta ${metaV}`
+      : `${ddmm(bdays[i])}${bdays[i] === m.hojeIso ? ' (hoje)' : ''} · Projeção ${cumProj[i]} · Meta ${metaV}`;
+    g += `<rect x="${x(i) - step / 2}" y="${T}" width="${step}" height="${H - T - B}" fill="transparent" data-tip="${tip}"/>`;
+  }
+  const legend = `<div class="legend">
+    <span><span class="line-swatch" style="background:${color};"></span>Realizado</span>
+    ${m.closed ? '' : `<span><span class="line-swatch dashed" style="border-top-color:${color}; opacity:.7;"></span>Projeção</span>`}
+    <span><span class="line-swatch" style="background:#c9c8bf;"></span>Meta de agendamentos = ${META}</span>
+  </div>`;
+  return `<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%">${g}</svg>${legend}</div>`;
+}
+
+function heroHtml(m){
+  const { st, text } = heroStatus(m);
+  return `<div class="card hero">
+    <div class="hero-left">
+      <p class="hero-label">Agendamentos realizados com envolvimento de pré-vendas</p>
+      <p class="hero-num">${m.prevendasReal}</p>
+      <span class="badge badge-${st.css}">${text}</span>
+      <p class="meta-line">🎯 Meta = ${m.meta} agendamentos</p>
+    </div>
+    ${heroChartHtml(m, STATUS_COLOR[st.css])}
+  </div>`;
+}
+
+function realizadosSubtext(real, ns, ar){
+  let s = `${real} realizados · ${ns} no-shows`;
+  if (ar > 0) s += ` · +${ar} a realizar`;
+  return s;
+}
+
+function cardsHtml(m){
+  const mc = (title, v, sub) => `<div class="card metric-card"><p class="label">${title}</p><div class="value-row"><p class="value">${v}</p></div>${sub ? `<p class="sub">${sub}</p>` : ''}</div>`;
+  const cards = [];
+  if (m.scope === 'pv') {
+    if (!m.closed) {
+      cards.push(mc('Agendamentos ainda à realizar no mês', m.pvArealizar));
+      cards.push(mc(`Agendamentos previstos para acontecer hoje (${ddmm(m.hojeIso)})`, m.pvHoje));
+    }
+    const p = m.ns.pv;
+    cards.push(`<div class="card metric-card"><p class="label">No-show (meta 10%)</p><div class="value-row"><div class="vline"><span class="value${p > 10 ? ' red' : ''}">${p}%</span><span class="vs">(${m.pvNsCount} de ${m.pvRealizadasCount} agendamentos realizados)</span></div></div></div>`);
+  } else {
+    if (!m.closed) cards.push(mc('Agendamentos à realizar no mês', m.propriaAr + m.externaAr, `${m.propriaAr} canais próprios · ${m.externaAr} externos`));
+    cards.push(`<div class="card metric-card"><p class="label">No-show (meta 10%)</p><div class="twin">
+      <div><p class="value${m.ns.total > 10 ? ' red' : ''}">${m.ns.total}%</p><p class="sub">total</p></div>
+      <div><p class="value${m.ns.pv > 10 ? ' red' : ''}">${m.ns.pv}%</p><p class="sub">pré-vendas</p></div></div></div>`);
+    cards.push(mc('Total de agendamentos (canais próprios)', m.propriaRealTotal + m.propriaNs + m.propriaAr, realizadosSubtext(m.propriaRealTotal, m.propriaNs, m.propriaAr)));
+    cards.push(mc('Total de agendamentos (canais próprios + externos)', m.totalReal + m.totalNs + m.totalAr, realizadosSubtext(m.totalReal, m.totalNs, m.totalAr)));
+  }
+  return `<div class="summary-grid" style="--cols:${cards.length}">${cards.join('')}</div>`;
+}
+
+function phoneCell(r){
+  if (r.pid) return `<a class="plink" href="https://investai.pipedrive.com/deal/${r.pid}" target="_blank" rel="noopener">Abrir ↗</a>`;
+  return '<span class="plink off" title="Sem pipedriveId nesta call — associe com: cli.py pipedrive">sem ID</span>';
+}
+
+function simpleTable(rows, empty){
+  if (!rows.length) return `<p class="week-empty">${empty}</p>`;
+  const body = rows.map(r => `<tr><td>${r.data}</td><td>${r.empresa}</td><td>${phoneCell(r)}</td></tr>`).join('');
+  return `<div class="calls-table-scroll"><table class="calls-table"><thead><tr><th>Data</th><th>Empresa</th><th>Telefone</th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function actionTablesHtml(m){
+  return `<div class="two-col">
+    <div class="card week-card"><p class="title">No-shows do mês a reagendar · ${m.pendentes.length} pendentes</p>${simpleTable(m.pendentes, 'Nenhum no-show pendente de reagendamento.')}</div>
+    <div class="card week-card"><p class="title">Calls de hoje (${ddmm(m.hojeIso)}) para enviar confirmação · ${m.hoje.length} calls</p>${simpleTable(m.hoje, 'Nenhuma call agendada pra hoje.')}</div>
+  </div>`;
+}
+
+function callsTable(rows, mode, scope){
+  const withPessoa = scope !== 'pv';
+  const cols = 5 + (withPessoa ? 1 : 0);
   const body = rows.map(r => {
-    const [d, empresa, origem, canal, pessoa, flag, presales] = r;
-    const dateCell = mode === 'pipeline' && flag ? `${d} <span class="today-tag">HOJE</span>` : d;
-    const tagCell = mode === 'closed' && flag ? '<span class="ns-tag">NO-SHOW</span>' : '';
-    const pessoaCell = presales ? `${pessoa} <span class="badge-presales">PRÉ-VENDAS</span>` : pessoa;
-    return `<tr>
-      <td>${dateCell}</td><td>${empresa}</td><td>${origem}</td><td>${canal}</td><td>${pessoaCell}</td>
-      <td>${tagCell}</td>
-    </tr>`;
+    const dateCell = mode === 'pipeline' && r.hoje ? `${r.data} <span class="today-tag">HOJE</span>` : r.data;
+    let tag = '';
+    if (mode === 'closed' && r.noShow) {
+      tag = r.resched
+        ? `<span class="nsre-tag" title="Reagendada p/ ${ddmm(r.resched)}">NO-SHOW REAGENDADO</span>`
+        : '<span class="ns-tag">NO-SHOW</span>';
+    }
+    const pessoaCell = r.presales ? `${r.pessoa} <span class="badge-presales">PRÉ-VENDAS</span>` : r.pessoa;
+    return `<tr><td>${dateCell}</td><td>${r.empresa}</td><td>${r.origem}</td><td>${r.canal}</td>${withPessoa ? `<td>${pessoaCell}</td>` : ''}<td>${tag}</td></tr>`;
   }).join('');
   return `<div class="calls-table-scroll">
     <table class="calls-table">
-      <thead><tr><th>Data</th><th>Empresa</th><th>Origem</th><th>Canal</th><th>Agendada por</th><th></th></tr></thead>
-      <tbody>${body || '<tr><td colspan="6" class="week-empty">nenhuma call</td></tr>'}</tbody>
+      <thead><tr><th>Data</th><th>Empresa</th><th>Origem</th><th>Canal</th>${withPessoa ? '<th>Agendada por</th>' : ''}<th></th></tr></thead>
+      <tbody>${body || `<tr><td colspan="${cols}" class="week-empty">nenhuma call</td></tr>`}</tbody>
     </table>
   </div>`;
 }
@@ -650,116 +829,40 @@ function renderMonth(key){
   document.getElementById('month-dropdown-label').textContent = m.label;
   document.querySelectorAll('.month-dropdown-item').forEach(el => el.classList.toggle('active', el.dataset.mes === key));
   document.getElementById('m-mtdline').textContent = m.mtdLine;
-  document.getElementById('m-hero-label').textContent = `Agendamentos realizados com envolvimento de pré-vendas · Meta = ${m.meta} agendamentos`;
-  document.getElementById('m-hero-big').textContent = m.prevendasReal;
-
-  const badge = document.getElementById('m-badge');
-  let st, expectedForMarker;
-  if (m.closed) {
-    const pct = Math.round((m.prevendasReal / m.meta) * 100);
-    st = statusOf(m.prevendasReal / m.meta);
-    badge.textContent = `${st.label} ${pct}% da meta`;
-  } else {
-    const expected = m.expected || 0;
-    expectedForMarker = expected;
-    const ratio = expected > 0 ? (m.prevendasReal / expected) : (m.prevendasReal === 0 ? 1 : 2);
-    const pct = Math.round(ratio * 100);
-    st = statusOf(ratio);
-    badge.textContent = `${st.label} ${pct}% do MTD (${Math.round(expected)} agendamentos)`;
-  }
-  badge.className = 'badge badge-' + st.css;
-
-  document.getElementById('m-proj-label').textContent = m.closed ? 'Fechamento do mês' : 'Projeção final do mês';
-  document.getElementById('m-proj-value').textContent = `${m.prevendasReal + m.pvArealizar} de ${m.meta}`;
-  document.getElementById('m-proj-sub').textContent = m.closed ? '' : `${m.prevendasReal} realizadas + ${m.pvArealizar} a realizar`;
-
-  const remainingEl = document.getElementById('m-proj-remaining');
-  if (m.closed) {
-    remainingEl.hidden = true;
-    remainingEl.innerHTML = '';
-  } else {
-    const faltam = m.meta - (m.prevendasReal + m.pvArealizar);
-    remainingEl.innerHTML = faltam > 0
-      ? `📅 Faltam <b>${faltam} call${faltam === 1 ? '' : 's'}</b> · restam <b>${m.diasUteisRestantes} dia${m.diasUteisRestantes === 1 ? '' : 's'} úteis</b>`
-      : '📅 Meta coberta pelo agendado';
-    remainingEl.hidden = false;
-  }
-
-  const barPct = Math.min(100, (m.prevendasReal / m.meta) * 100);
-  const barFillEl = document.getElementById('m-bar-fill');
-  barFillEl.style.width = barPct + '%';
-  barFillEl.className = 'bar-fill bar-' + st.css;
-  barFillEl.setAttribute('data-tip', `${m.prevendasReal} realizadas`);
-  const barArEl = document.getElementById('m-bar-fill-ar');
-  barArEl.className = 'bar-fill-ar bar-' + st.css;
-  barArEl.setAttribute('data-tip', `${m.pvArealizar} a realizar`);
-  if (m.closed || !m.pvArealizar) {
-    barArEl.style.width = '0%';
-  } else {
-    const arPct = Math.min(100 - barPct, (m.pvArealizar / m.meta) * 100);
-    barArEl.style.left = barPct + '%';
-    barArEl.style.width = arPct + '%';
-  }
-  const marker = document.getElementById('m-bar-marker');
-  if (m.closed) {
-    marker.style.display = 'none';
-  } else {
-    marker.style.display = 'block';
-    marker.style.left = `calc(${(expectedForMarker/m.meta)*100}% - 1px)`;
-    document.getElementById('m-bar-marker-label').textContent = `MTD - ${Math.round(expectedForMarker)}`;
-  }
-
-  document.getElementById('m-card-propria').textContent = m.propriaRealTotal + m.propriaNs + m.propriaAr;
-  document.getElementById('m-card-propria-sub').textContent = realizadosSubtext(m.propriaRealTotal, m.propriaNs, m.propriaAr);
-
-  const grid = document.getElementById('m-summary-grid');
-  const arWrap = document.getElementById('m-card-ar-wrap');
-  if (m.closed) {
-    arWrap.style.display = 'none';
-    grid.classList.add('cols-3');
-  } else {
-    arWrap.style.display = '';
-    grid.classList.remove('cols-3');
-    document.getElementById('m-card-ar').textContent = m.propriaAr + m.externaAr;
-    document.getElementById('m-card-ar-sub').textContent = `${m.propriaAr} canais próprios · ${m.externaAr} externos`;
-  }
-
-  document.getElementById('m-ns-total').textContent = `${m.ns.total}%`;
-  document.getElementById('m-ns-total').className = 'value' + (m.ns.total > 10 ? ' red' : '');
-  document.getElementById('m-ns-pv').textContent = `${m.ns.pv}%`;
-  document.getElementById('m-ns-pv').className = 'value' + (m.ns.pv > 10 ? ' red' : '');
-
-  document.getElementById('m-card-total').textContent = m.totalReal + m.totalNs + m.totalAr;
-  document.getElementById('m-card-total-sub').textContent = realizadosSubtext(m.totalReal, m.totalNs, m.totalAr);
+  document.getElementById('m-strip').innerHTML = stripHtml(m);
+  document.getElementById('m-hero').innerHTML = heroHtml(m);
+  document.getElementById('m-cards').innerHTML = cardsHtml(m);
 
   document.getElementById('m-origem-legend').style.display = m.origemDisponivel ? '' : 'none';
   if (m.origemDisponivel) {
     let origemHtml = '';
     Object.keys(m.origem).forEach(section => {
+      if (m.scope === 'pv' && !m.origem[section].length) return;
       origemHtml += `<p class="seg-section-label">${section}</p>${rowsHtml(m.origem[section], m.closed)}`;
     });
-    document.getElementById('m-origem').innerHTML = origemHtml;
+    document.getElementById('m-origem').innerHTML = origemHtml || '<p class="week-empty">Sem calls neste recorte.</p>';
   } else {
     document.getElementById('m-origem').innerHTML = '<p class="week-empty">dado indisponível</p>';
   }
-
   document.getElementById('m-canal-legend').style.display = m.canalDisponivel ? '' : 'none';
-  if (m.canalDisponivel) {
-    document.getElementById('m-canal').innerHTML = rowsHtml(m.canal, m.closed);
-  } else {
-    document.getElementById('m-canal').innerHTML = '<p class="week-empty">dado indisponível</p>';
-  }
+  document.getElementById('m-canal').innerHTML = m.canalDisponivel
+    ? (rowsHtml(m.canal, m.closed) || '<p class="week-empty">Sem calls neste recorte.</p>')
+    : '<p class="week-empty">dado indisponível</p>';
+
+  const pv = m.scope === 'pv';
+  document.getElementById('m-actions').innerHTML = pv && !m.closed ? actionTablesHtml(m) : '';
+  document.getElementById('m-people-card').hidden = pv;
 
   const realizedCard = document.getElementById('m-realized-card');
   if (m.closed) {
-    document.getElementById('m-week-title').textContent = `Todas as calls de ${m.label}`;
-    document.getElementById('m-week-body').innerHTML = callsTable(m.allCalls, 'closed');
+    document.getElementById('m-week-title').textContent = m.allTitle;
+    document.getElementById('m-week-body').innerHTML = callsTable(m.allCalls, 'closed', m.scope);
     realizedCard.hidden = true;
   } else {
     document.getElementById('m-week-title').textContent = m.week.title;
-    document.getElementById('m-week-body').innerHTML = callsTable(m.week.calls, 'pipeline');
+    document.getElementById('m-week-body').innerHTML = callsTable(m.week.calls, 'pipeline', m.scope);
     document.getElementById('m-realized-title').textContent = m.realized.title;
-    document.getElementById('m-realized-body').innerHTML = callsTable(m.realized.calls, 'closed');
+    document.getElementById('m-realized-body').innerHTML = callsTable(m.realized.calls, 'closed', m.scope);
     realizedCard.hidden = false;
   }
 
@@ -776,6 +879,14 @@ function renderMonth(key){
       <span class="p-count">${total} (${triCountLabel(real, ar, ns, m.closed)})</span>
     </div>`;
   }).join('');
+}
+
+function setScope(s){
+  SCOPE = s;
+  document.querySelectorAll('#scope button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+  recomputeViews();
+  if (ACTIVE_MES) renderMonth(ACTIVE_MES);
+  if (ACTIVE_TAB === 'historico') renderHistorico();
 }
 
 function switchTab(tab){
@@ -856,14 +967,14 @@ function lineChartSvg({ months, series, maxVal, fmtVal, refLine, openMonthMarker
   return svg;
 }
 
-function barChartSvg({ months, meta }){
+function barChartSvg({ months, meta, soloPv }){
   const usable = CHART_RIGHT - CHART_LEFT - 48;
   const slot = Math.min(110, Math.max(50, usable / months.length));
   const totalWidth = slot * months.length;
   const startX = CHART_LEFT + 24 + (usable - totalWidth) / 2 + slot / 2;
   const xs = months.map((_, i) => startX + i * slot);
   const barW = Math.min(48, slot * 0.55);
-  const maxVal = niceMax(months.map(m => m.totalReal + m.totalAr), meta);
+  const maxVal = niceMax(months.map(m => soloPv ? m.presalesRealTotal + m.pvArealizar : m.totalReal + m.totalAr), meta);
   const yFor = v => CHART_BOTTOM - (v/maxVal) * (CHART_BOTTOM - CHART_TOP);
 
   let svg = `<svg viewBox="0 0 720 200" width="100%">`;
@@ -880,7 +991,7 @@ function barChartSvg({ months, meta }){
     const hPv = CHART_BOTTOM - yFor(pv);
     const hOut = (CHART_BOTTOM - yFor(pv + outros)) - hPv;
     svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv}" width="${barW}" height="${hPv}" fill="var(--g-dark)" data-tip="${monthTick(m)} · agendado pela pré-vendas${proj}: ${pv}"/>`;
-    svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv-hOut}" width="${barW}" height="${hOut}" fill="var(--g-pale)" data-tip="${monthTick(m)} · sem envolvimento de pré-vendas${proj}: ${outros}"/>`;
+    if (!soloPv) svg += `<rect x="${x}" y="${CHART_BOTTOM-hPv-hOut}" width="${barW}" height="${hOut}" fill="var(--g-pale)" data-tip="${monthTick(m)} · sem envolvimento de pré-vendas${proj}: ${outros}"/>`;
     svg += `<text x="${xs[i]}" y="${CHART_BOTTOM+18}" font-size="10" fill="var(--text-secondary)" text-anchor="middle">${monthTick(m)}${m.closed?'':'*'}</text>`;
   });
   svg += `</svg>`;
@@ -939,17 +1050,21 @@ function renderHistorico(){
   }
   const months = HIST_ORDER.map(k => VIEWS[k]);
 
-  const maxNs = niceMax(months.flatMap(m => [m.ns.total, m.ns.pv]), 10);
+  const pvOnly = SCOPE === 'pv';
+  document.getElementById('leg-ns-total').style.display = pvOnly ? 'none' : '';
+  document.getElementById('leg-sem-pv').style.display = pvOnly ? 'none' : '';
+  document.getElementById('hist-pessoa-card').hidden = pvOnly;
+  const maxNs = niceMax(months.flatMap(m => pvOnly ? [m.ns.pv] : [m.ns.total, m.ns.pv]), 10);
   document.getElementById('chart-noshow').innerHTML = lineChartSvg({
     months, maxVal: maxNs, fmtVal: v => `${Math.round(v)}%`,
     refLine: { value: 10, color: '#c9a29c' },
     series: [
-      { name: 'No-show total', color: 'var(--text-secondary)', getValue: m => m.ns.total },
+      ...(pvOnly ? [] : [{ name: 'No-show total', color: 'var(--text-secondary)', getValue: m => m.ns.total }]),
       { name: 'No-show pré-vendas', color: 'var(--g-dark)', getValue: m => m.ns.pv },
     ],
   });
 
-  document.getElementById('chart-meta').innerHTML = barChartSvg({ months, meta: months[0].meta });
+  document.getElementById('chart-meta').innerHTML = barChartSvg({ months, meta: months[0].meta, soloPv: pvOnly });
   document.getElementById('chart-meta-goal-legend').textContent = `meta de agendamentos: ${months[0].meta}`;
 
   const origemRows = m => [...m.origem["CANAIS PRÓPRIOS"], ...m.origem["CANAIS EXTERNOS"]];
@@ -957,6 +1072,6 @@ function renderHistorico(){
   const monthsCanal = months.filter(m => m.canalDisponivel);
   renderSeriesChart('chart-origem', 'chart-origem-legend', monthsOrigem, origemRows);
   renderSeriesChart('chart-canal', 'chart-canal-legend', monthsCanal, m => m.canal);
-  renderSeriesChart('chart-pessoa', 'chart-pessoa-legend', months, m => m.pessoa);
+  if (!pvOnly) renderSeriesChart('chart-pessoa', 'chart-pessoa-legend', months, m => m.pessoa);
 }
 '''

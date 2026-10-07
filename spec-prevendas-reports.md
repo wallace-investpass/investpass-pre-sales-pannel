@@ -1,5 +1,5 @@
 # investPass — Pré-vendas Reports (Slack)
-### Documento de especificação v3 — versão final consolidada, 2026-09-04
+### Documento de especificação v3 — versão final consolidada, 2026-09-04 (atualizada em 2026-10-07: Check Diário e migração do cron pro Railway)
 
 Reconcilia a spec v1 original com as correções feitas em conversas subsequentes e com o comportamento real implementado em `src/reports.py`, `src/calc.py`, `src/slack.py`, `cli.py`, `config/slack_reports.json` e `.github/workflows/`. Onde a v1 divergia do código, o código venceu — ver §9 (histórico de correções) para o que mudou e por quê.
 
@@ -7,10 +7,11 @@ Reconcilia a spec v1 original com as correções feitas em conversas subsequente
 
 ## 1. Contexto e objetivo
 
-Dois reports automatizados no Slack, derivados do painel "investPass — Pré-vendas Intelligence" (`CLAUDE.md`), complementando-o da mesma forma que o Weekly Sales Report complementa o Conversion Intelligence Dashboard (`spec-weekly-sales-report.md`):
+Três reports automatizados no Slack (os dois primeiros no canal, o terceiro em DM; ver §11), derivados do painel "investPass — Pré-vendas Intelligence" (`CLAUDE.md`), complementando-o da mesma forma que o Weekly Sales Report complementa o Conversion Intelligence Dashboard (`spec-weekly-sales-report.md`):
 
 1. **Weekly Report** — toda segunda-feira, ritmo da semana em andamento dentro do mês corrente.
 2. **Fechamento Mensal** — todo dia 1, placar final do mês que acabou de fechar.
+3. **Check Diário** — dias úteis, DM pro Vinicius com as calls de hoje agendadas por ele (§11).
 
 Público duplo: útil pro Vini (pré-vendedor, precisa saber onde focar) e pro restante do time (entender se o envolvimento da pré-vendas está alimentando o funil de vendas no ritmo esperado, independentemente do canal de origem da reunião). Tom direto, sem rodeio — mesmo padrão do Weekly Sales Report.
 
@@ -34,16 +35,20 @@ Ambos os jobs reaproveitam a mesma lógica de cálculo já usada pelo painel (he
 |---|---|---|
 | Weekly Report | Toda segunda-feira, 8h (horário de Brasília) | Cron semanal, mesmo horário do Weekly Sales Report |
 | Fechamento Mensal | Todo dia 1 do mês, corrido (não precisa ser dia útil) | Cron mensal fixo no dia 1 — reporta o mês que fechou (mês anterior à data de disparo) |
+| Check Diário | Dias úteis, 8h (horário de Brasília) | Cron seg–sex, DM pro Vinicius (§11) |
 
 **Canal Slack**: `C09UJ55HQHW` — canal **dedicado de Pré-vendas**. Este é o valor correto e definitivo, não um ajuste temporário: a v1 desta spec errava ao dizer "mesmo canal do Weekly Sales Report" (`C09TLCZB88M`, que é o canal de **Vendas**) — os dois são canais distintos. O erro só foi percebido no primeiro disparo real de produção (Fechamento de Agosto/2026), que saiu no canal errado por engano; a mensagem indevida ficou pendente de remoção manual (ver pendência em §9).
 
-**Mecanismo de disparo**: GitHub Actions, workflows agendados no próprio repositório do painel (`wallace-investpass/investpass-pre-sales-pannel`):
-- `.github/workflows/weekly-report.yml` — `cron: "0 11 * * 1"` (11h UTC = 8h Brasília, toda segunda).
-- `.github/workflows/fechamento-mensal.yml` — `cron: "0 11 1 * *"` (11h UTC = 8h Brasília, todo dia 1).
+**Mecanismo de disparo (desde 2026-10-07)**: **Railway**, projeto `prevendas-reports` (separado do projeto de Vendas, `vendas-reports`), três serviços cron — todos em imagem `python:3.11`, sem repo conectado: cada execução faz `git clone --depth 1` da `main` e roda o `cli.py`, então sempre usa o `data/` e o código mais recentes, sem depender de redeploy a cada push:
+- `weekly-report` — `0 11 * * 1` (11h UTC = 8h Brasília, toda segunda) → `cli.py report-semanal`.
+- `fechamento-mensal` — `0 11 1 * *` (todo dia 1) → `cli.py fechamento-mensal`.
+- `checkin-diario` — `0 11 * * 1-5` (dias úteis) → `cli.py checkin-diario`.
 
-Ambos também aceitam `workflow_dispatch` (disparo manual pela aba Actions do GitHub, ou via `gh workflow run`), usado pra validar execuções antes de confiar 100% no cron.
+O cron do Railway é em UTC e **não executa o comando no momento do deploy** (verificado) — só no horário agendado. `SLACK_BOT_TOKEN` fica como variável do serviço `checkin-diario`; os outros dois a referenciam (`${{checkin-diario.SLACK_BOT_TOKEN}}`). Para trocar comando/cron/variável de um serviço já criado é preciso um novo deploy (`serviceInstanceDeployV2`), não só "redeploy".
 
-**"Hoje" dos jobs**: sempre calculado em `America/Sao_Paulo` (`zoneinfo`), nunca no relógio UTC do runner do GitHub Actions — evita datas erradas em qualquer teste manual fora do horário programado.
+Os workflows de `.github/workflows/` (`weekly-report.yml`, `fechamento-mensal.yml`, `checkin-diario.yml`) **não têm mais `schedule`** — ficaram só com `workflow_dispatch`, como disparo manual de contingência (`gh workflow run …`). Se algum dia o Railway falhar, esse é o plano B; nunca reativar o `schedule` em paralelo (duplicaria a mensagem).
+
+**"Hoje" dos jobs**: sempre calculado em `America/Sao_Paulo` (`zoneinfo`), nunca no relógio UTC do runner — evita datas erradas em qualquer teste manual fora do horário programado.
 
 **Formato**: Slack Block Kit, mesmo padrão do Weekly Sales Report.
 
@@ -197,17 +202,18 @@ Pontos que a v1 desta spec deixava em aberto ou registrava errado, decididos/cor
 - **MTD e dias úteis restantes**: sempre por dias úteis (com feriados), nunca dias corridos — a v1 descrevia "pro-rata pelos dias corridos", divergente do que o painel já fazia e do que `src/calc.py` implementa.
 - **No-show, denominador**: sempre "total já realizado" (realizada + no-show), nunca "total agendado" (que incluiria "a realizar") — a v1 usava a fórmula errada nas duas linhas (Geral e Pré-vendas).
 - **Agendamentos da semana sem cap**: a v1 previa cap de 10 + "+N outras no painel"; removido a pedido — lista a semana inteira, do tamanho que for.
-- **Hosting do cron**: GitHub Actions, no mesmo repositório do painel (ver §3) — a v1 deixava isso como "próximo passo", hoje é o mecanismo real (`weekly-report.yml`, `fechamento-mensal.yml`, ambos com `workflow_dispatch`).
+- **Hosting do cron**: começou em GitHub Actions (2026-09) e **migrou pro Railway em 2026-10-07** (ver §3). Motivo: o cron do GitHub é "melhor esforço" e, a partir de 05/10, o Check Diário passou a atrasar 6–8h (05/10 às 16h24, 06/10 às 13h58 BRT) ou a não disparar no dia — o GitHub não reportava incidente e o workflow/secret estavam corretos (o `workflow_dispatch` manual rodava na hora). O Railway exigiu plano pago (Hobby): o trial expirou e o Free não comporta o projeto de Vendas + o novo.
 - **Timezone dos jobs**: "hoje" sempre calculado em `America/Sao_Paulo` via `zoneinfo`, nunca no UTC do runner — não estava na v1.
 - **Módulo de cálculo compartilhado**: `src/calc.py` (Python), porta a lógica do painel (que roda em JS no navegador) — ver §2. A v1 tratava isso como próximo passo; já implementado.
 - **Config dos jobs**: `config/slack_reports.json` (canal, dono, URL do painel, mapeamento pessoa→Slack ID) — a v1 tratava isso como próximo passo; já implementado.
-- **Autenticação Slack**: Bot Token (`chat.postMessage`), guardado como secret `SLACK_BOT_TOKEN` no GitHub Actions (Settings → Secrets and variables → Actions).
-- **Falha ao postar no canal**: até 3 tentativas com backoff exponencial (2s, 4s, 8s — `src/slack.py`). Se todas falharem, o job manda uma **DM pro dono do painel** (`U02ELHA43QR`, ver §4) com a mensagem de erro, além de logar normalmente no histórico da execução do GitHub Actions.
-- **Mês sem dado** (`data/{AAAA-MM}.json` não existe quando o job roda): o job **não posta nada no canal público** — em vez disso, manda DM pro dono avisando (`"⚠️ O {report} de Pré-vendas não saiu hoje — arquivo data/{mes}.json não existe."`), loga o erro e encerra com código de saída ≠ 0 (fica visível como falha no histórico do GitHub Actions).
+- **Autenticação Slack**: Bot Token (`chat.postMessage`), guardado como variável `SLACK_BOT_TOKEN` no Railway (e ainda como secret no GitHub, usado só pelos workflows manuais de contingência). Bot: `jordan_belfort`.
+- **Falha ao postar no canal**: até 3 tentativas com backoff exponencial (2s, 4s, 8s — `src/slack.py`). Se todas falharem, o job manda uma **DM pro dono do painel** (`U02ELHA43QR`, ver §4) com a mensagem de erro, além de logar no histórico de execuções do serviço no Railway.
+- **Mês sem dado** (`data/{AAAA-MM}.json` não existe quando o job roda): o job **não posta nada no canal público** — em vez disso, manda DM pro dono avisando (`"⚠️ O {report} de Pré-vendas não saiu hoje — arquivo data/{mes}.json não existe."`), loga o erro e encerra com código de saída ≠ 0 (fica visível como falha no histórico de execuções).
 - **Rodapé de aviso (divider + "Atenção")**: o `───────────` usado nas versões anteriores desta spec pra representar o rodapé era só uma representação visual do documento — o elemento real é sempre um `divider` do Block Kit (`{"type": "divider"}`), não texto com travessões. Confirmado como já implementado em `src/reports.py`, ordem final: link do painel → divider → "*Atenção:* ...".
 - **CLI** (no repositório do painel, `cli.py`):
   - `report-semanal [--mes YYYY-MM] [--dry-run]`
   - `fechamento-mensal [--mes YYYY-MM] [--dry-run]`
+  - `checkin-diario [--mes YYYY-MM] [--dry-run]` — DM diária pro Vinicius (§11). Reaproveita o fluxo de `_run_report`, com destino sobrescrito pro Slack ID dele.
   - `test-slack` — valida o token (`auth.test`) e manda uma DM de teste pro dono, sem tocar no canal público. Usado pra validar a configuração do secret sem risco de poluir o canal real. Não estava na v1.
   - `apagar-mensagem --canal ID --contem "texto"` — utilitário de manutenção pra apagar uma mensagem indevida do bot (ex: post que foi pro canal errado, ver correção de canal acima). Não estava na v1. **Pendência conhecida**: precisa do escopo `channels:history` (ou `groups:history` se o canal for privado) no Slack App, que ainda não tinha sido concedido na primeira vez que foi usado — reinstalação do app pendente, sem ação agendada ainda.
   - `--dry-run` em `report-semanal`/`fechamento-mensal`: imprime o payload Block Kit (JSON) em vez de postar — usado pra validar visualmente o formato antes de considerar uma mudança aplicada.
@@ -217,8 +223,36 @@ Pontos que a v1 desta spec deixava em aberto ou registrava errado, decididos/cor
 
 ## 10. Próximos passos
 
-1. ~~Implementar os dois jobs (cron semanal segunda 8h + cron mensal dia 1), lendo do JSON stateful do painel de pré-vendas.~~ **Feito** — GitHub Actions, ver §3.
+1. ~~Implementar os dois jobs (cron semanal segunda 8h + cron mensal dia 1), lendo do JSON stateful do painel de pré-vendas.~~ **Feito** — GitHub Actions (2026-09) e depois Railway (2026-10-07), ver §3.
 2. ~~Extrair a lógica de cálculo (hero metric, MTD, thresholds, taxa de no-show) para módulo compartilhado entre painel e reports, evitando duplicar regra em dois lugares.~~ **Feito** — `src/calc.py` (§2 e §9).
 3. ~~Adicionar o mapeamento pessoa → Slack ID (§4) como config dos jobs.~~ **Feito** — `config/slack_reports.json`.
 4. Validar manualmente as primeiras execuções de cada report antes de considerar produção estável. **Em andamento**: Fechamento Mensal de agosto/2026 já rodou de verdade em produção (após corrigir o canal, §3/§9); Weekly Report ainda não teve um disparo real de segunda-feira (próximo: 07/09/2026).
-5. Conceder ao Slack App o escopo `channels:history`/`groups:history` e reinstalar, pra destravar o utilitário `apagar-mensagem` (usado pra limpar a mensagem que foi parar no canal de vendas por engano) — pendência conhecida, sem prazo definido.
+5. **Acompanhar os primeiros disparos reais no Railway**: Check Diário (primeiro: 08/10/2026), Weekly (12/10) e Fechamento Mensal (01/11). Nenhum agendamento do Railway foi exercitado ainda — só `--dry-run` e `test-slack` manuais.
+6. Conceder ao Slack App o escopo `channels:history`/`groups:history` e reinstalar, pra destravar o utilitário `apagar-mensagem` (usado pra limpar a mensagem que foi parar no canal de vendas por engano) — pendência conhecida, sem prazo definido.
+
+---
+
+## 11. Check Diário (DM do Vinicius)
+
+Criado em 2026-10-07. O Vinicius confirma cada call com o lead pra evitar no-show; o bot manda a lista do dia direto na DM dele pra ele não precisar abrir a agenda. **DM, não canal** — destino = Slack ID dele (`pessoa_slack_id[presales_agendador]`, `U09TK78CA1G`). Sem `@channel`, sem rodapé de engajamento (isso é regra dos reports de canal).
+
+**Disparo**: dias úteis, 8h Brasília (Railway, §3). Não há tratamento de feriado: num feriado ele recebe a mensagem de "sem calls" ou a lista normal, conforme os dados.
+
+**Conteúdo** — calls com `data = hoje`, agendadas por Vinicius Almeida (mesma definição de pré-vendas do hero), status efetivo `a_realizar` (call já marcada como no-show/realizada no dia não entra), ordenadas por empresa (a hora não é guardada, §8 do CLAUDE.md, então não há ordem por horário). Uma única section do Block Kit:
+
+```
+👋 Fala Vini! Essas são as calls de hoje (DD/MM) que precisam da sua confirmação de agenda com o lead:
+
+1. Empresa A
+2. Empresa B
+```
+
+Sem nenhuma call, a mensagem muda (e é enviada mesmo assim, pra ele saber que o bot rodou):
+
+```
+👋 Fala Vini! Não tem nenhuma call prevista pra acontecer hoje (DD/MM) e que foi agendada por você... Vale a pena você dar um check em como está a sua performance em relação a meta do mês. Bora pra cima!
+```
+
+**Limites conhecidos**: só nome da empresa — sem horário, contato ou telefone (nenhum é persistido; `data/*.json` é público, ver CLAUDE.md §8/§13). Quem confirma ainda abre o Pipedrive pra falar com o lead. Calls marcadas depois das 8h não entram naquele dia.
+
+**Falha**: mesmas regras do restante (§9) — até 3 tentativas, DM de erro pro dono; arquivo do mês inexistente → DM de aviso pro dono, nada pro Vinicius.

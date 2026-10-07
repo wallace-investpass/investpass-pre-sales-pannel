@@ -329,3 +329,14 @@ Fonte de verdade de layout: `mockup-v3-painel-prevendas.html` (raiz do projeto) 
 - **Privacidade por design**: o parser (compacto e Slack, seção 8) nunca extrai nem persiste `contato`, `cargo` nem a URL do Pipedrive — só empresa, data, origem, canal, agendado por, no-show e o número do deal (`pipedriveId`, não é dado pessoal) chegam a `data/*.json`. Isso é deliberado justamente porque `data/` é público (item acima): não existe campo "opcional" que possa vazar nome de contato ou cargo, porque esses campos nunca são capturados em primeiro lugar. O seletor de escopo Pré-vendas/Time (seção 5) é só foco de leitura: os dados do time seguem no mesmo HTML e no repositório público.
 - **Pages**: "Deploy from a branch", branch `main`, pasta `/docs` (sem step de build — o HTML gerado já é o artefato final).
 - **Publicação automática**: `python3 cli.py gerar --push` gera `docs/index.html` e, se houver mudança, faz `git add docs && git commit && git push` sozinho — é o comando usado sempre que uma atualização real (não teste/dev) precisa ir pro ar. `gerar` sem `--push` só atualiza o arquivo local, sem tocar no git (usado pra iteração/teste).
+
+---
+
+## 14. Reports de Slack (Weekly, Fechamento Mensal, Check Diário)
+
+Especificação completa em `spec-prevendas-reports.md` (fonte de verdade — formato das mensagens, regras de cálculo, decisões e histórico). Pontos operacionais que valem lembrar:
+
+- **Roda no Railway**, projeto `prevendas-reports` (serviços `weekly-report`, `fechamento-mensal`, `checkin-diario`, todos 8h BRT). Cada execução clona a `main` e roda `cli.py`, então `data/` e código sempre vêm do último push — sem redeploy. Os workflows em `.github/workflows/` são só disparo manual de contingência (sem `schedule`; o cron do GitHub atrasava horas). Não reativar `schedule` lá junto com o Railway.
+- Testar sempre com `--dry-run` (`report-semanal`, `fechamento-mensal`, `checkin-diario`) antes de qualquer disparo real; o Fechamento Mensal aceita `--mes YYYY-MM`.
+- A lógica de MTD/hero/no-show dos reports vive em `src/calc.py` (porta Python da regra do painel, seções 4–5): qualquer mudança de regra aqui precisa ser replicada lá.
+- Reports já postados no canal **não se corrigem sozinhos**: se `data/` mudar depois do disparo, é preciso apagar a mensagem à mão e republicar (o `apagar-mensagem` ainda depende de um escopo do Slack App não concedido).

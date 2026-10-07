@@ -1,9 +1,8 @@
 name: Pré-vendas — Fechamento Mensal
 
 on:
-  schedule:
-    # 8h de Brasília (UTC-3) = 11h UTC, todo dia 1 do mês (corrido).
-    - cron: "0 11 1 * *"
+  # Agendamento migrou pro Railway (projeto prevendas-reports, 8h BRT) porque o cron
+  # do GitHub atrasava horas. Este workflow ficou só como disparo manual de contingência.
   workflow_dispatch: {}
 
 permissions:

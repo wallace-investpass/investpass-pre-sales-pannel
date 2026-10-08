@@ -180,6 +180,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-10-07T10:06:13"
+    },
+    {
+      "id": "c6545c8d",
+      "empresa": "Epson",
+      "data": "2026-10-16",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4193,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-10-08T13:56:50"
     }
   ]
 }

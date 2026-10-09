@@ -198,6 +198,42 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-10-08T13:56:50"
+    },
+    {
+      "id": "24b2b851",
+      "empresa": "Aegea Saneamento",
+      "data": "2026-10-15",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4197,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-10-09T08:29:40"
+    },
+    {
+      "id": "4b4e867b",
+      "empresa": "Track&Field",
+      "data": "2026-10-13",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4202,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-10-09T08:29:40"
     }
   ]
 }

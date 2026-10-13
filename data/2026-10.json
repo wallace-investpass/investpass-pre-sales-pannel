@@ -288,6 +288,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-10-09T14:01:10"
+    },
+    {
+      "id": "29aebead",
+      "empresa": "Klavi",
+      "data": "2026-10-22",
+      "origem": "LinkedIn Vini",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "Email",
+      "canalReconhecido": true,
+      "agendadoPor": "Vinicius Almeida",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4206,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-10-13T09:49:25"
     }
   ]
 }

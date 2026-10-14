@@ -342,6 +342,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-10-14T12:00:46"
+    },
+    {
+      "id": "09a6a5bc",
+      "empresa": "Agribrasil",
+      "data": "2026-10-20",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4232,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-10-14T15:53:21"
     }
   ]
 }

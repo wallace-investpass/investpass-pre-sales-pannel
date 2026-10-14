@@ -18,6 +18,24 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-10-14T09:02:53"
+    },
+    {
+      "id": "a5539369",
+      "empresa": "Gerdau",
+      "data": "2026-11-04",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4231,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-10-14T15:39:56"
     }
   ]
 }

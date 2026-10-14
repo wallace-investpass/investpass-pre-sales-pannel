@@ -1,0 +1,23 @@
+{
+  "mes": "2026-11",
+  "calls": [
+    {
+      "id": "e70f7bd3",
+      "empresa": "Penske Logistics",
+      "data": "2026-11-06",
+      "origem": "CONARH",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "Email",
+      "canalReconhecido": true,
+      "agendadoPor": "Vinicius Almeida",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4224,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-10-14T09:02:53"
+    }
+  ]
+}

@@ -306,6 +306,42 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-10-13T09:49:25"
+    },
+    {
+      "id": "bc81aa55",
+      "empresa": "Assai Atacadista",
+      "data": "2026-10-15",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4228,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-10-14T11:56:21"
+    },
+    {
+      "id": "3931e2d1",
+      "empresa": "Lojas Renner",
+      "data": "2026-10-15",
+      "origem": "Referral de cliente",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "Email",
+      "canalReconhecido": true,
+      "agendadoPor": "Igor Ramos",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4229,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-10-14T12:00:46"
     }
   ]
 }

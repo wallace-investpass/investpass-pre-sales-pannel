@@ -93,10 +93,12 @@ GRT Gratiam — 31/08 — CONARH — Ligação (Agendada por @Vinicius Almeida) 
 ## 3. Taxonomia de canais
 
 **Origem do lead — canais próprios (entram na meta de 20):**
-LinkedIn Vini · LinkedIn Seixas · LinkedIn Raolho · Lista fria · Landing Page · CONARH · Reengaja
+LinkedIn Vini · LinkedIn Seixas · LinkedIn Raolho · Lista fria · Landing Page · CONARH · Reengaja · Referral de cliente (lead indicado por um cliente atual — ex: Lojas Renner indicada pelo Magalu, PinPag indicada pela Stone; criada em 2026-10-14. O nome do cliente que indicou é descartado, como o sufixo do canal "associada - Fulano". Entra nos cards de canais próprios, mas só conta na meta/hero se agendada pelo Vinicius — seção 4, sem regra nova)
 
 **Origem do lead — canais externos (não entram na meta):**
 Associados (renomeada de "Indicação Externa" em 2026-09 — mesmo canal, nome novo) · Flash · Embaixadores
+
+**Atenção**: "Referral" continua existindo **só como canal de agendamento**; "Referral de cliente" é uma origem, valor separado (a PinPag, antes Associados + canal Referral, virou origem Referral de cliente + canal WhatsApp). No texto do Slack, `indicação externa` puro mapeia para Associados e `indicação externa - Cliente X` (qualquer sufixo após o traço) mapeia para Referral de cliente.
 
 **Atenção**: "Associados" existe tanto como origem (acima) quanto como canal de agendamento (abaixo) — são duas dimensões independentes, e uma call mostrar Origem=Associados e Canal=Associados ao mesmo tempo não é bug nem duplicação, é coincidência de nome confirmada como aceitável. Não "corrigir" isso automaticamente.
 
@@ -204,7 +206,8 @@ Rodando a taxonomia acima contra os dados reais, aparecem pontos que a spec verb
 
 1. **Correção de dado**: a linha do Grupo Rioto Saúde Ocupacional (12/08) tinha origem "Inbound" e canal "Ligação" registrados errado — o correto é **Origem = Landing Page, Canal = WhatsApp** (já corrigido no exemplo da seção 2). Isso valida que a checagem de "origem/canal não reconhecido" (seção 6, item 2) tem valor real: foi ela que pegou esse erro de digitação. O Claude Code deve manter essa validação ativa mesmo no fluxo incremental (seção 9) — todo novo input, seja avulso ou em lote, passa por ela.
 2. **Variação de capitalização**: "Lista Fria" aparece nos dados reais, mas a taxonomia da seção 3 lista "Lista fria" (minúsculo). O parser precisa normalizar por case-insensitive pra não tratar como origem desconhecida.
-3. **Lucas Pedroso não é exclusivo de origem/canal Associados** — a linha `Marsh/Mercer — 31/08 — CONARH — LinkedIn (Agendada por @Lucas Pedroso)` mostra ele agendando via CONARH também. Não codificar regra implícita de "pessoa X = canal Y".
+3. **Origem nova no meio do mês** (2026-10-14): Lojas Renner (indicada pelo cliente Magalu) e PinPag (indicada pela Stone) não tinham origem na taxonomia — a validação de "origem desconhecida" (seção 6, item 2) as sinalizou (`origemReconhecida: false`) e a decisão foi criar "Referral de cliente" (seção 3), em vez de forçar Associados.
+4. **Lucas Pedroso não é exclusivo de origem/canal Associados** — a linha `Marsh/Mercer — 31/08 — CONARH — LinkedIn (Agendada por @Lucas Pedroso)` mostra ele agendando via CONARH também. Não codificar regra implícita de "pessoa X = canal Y".
 
 Esse fechamento de agosto é só **Realizadas** (54 linhas, sem "À realizar") — bom caso de teste pro modo "mês fechado".
 
@@ -234,7 +237,7 @@ NOVA CALL AGENDADA
 |---|---|---|
 | `Empresa` | empresa | — |
 | `Data da reunião` | data | Vem com hora (`18/09 - 14h`) — **decidido: descartar a hora**, guardar só a data, igual ao formato compacto |
-| `Origem do lead` | origem | Minúsculo (`indicação externa` — exemplo anterior à renomeação da seção 3; hoje essa origem se chama `Associados`) — normalizar case-insensitive contra a taxonomia da seção 3 |
+| `Origem do lead` | origem | Minúsculo (`indicação externa` — exemplo anterior à renomeação da seção 3; hoje essa origem se chama `Associados`) — normalizar case-insensitive contra a taxonomia da seção 3. `indicação externa` puro → Associados; `indicação externa - Cliente X` (sufixo após o traço) → Referral de cliente, com o nome do cliente descartado |
 | `Canal de agendamento` | canal | Vem com sufixo (`associada - Camila Martins`) — `associada` mapeia para `Associados`; o texto depois do traço é o nome de quem indicou/associou. **Decidido: descartar**, não guardar como metadado |
 | Nome de quem postou + horário (`Lucas Pedroso [18h35]`, topo da mensagem) | agendadoPor | **É esta a fonte de verdade de quem agendou** — equivalente ao "Agendada por @Pessoa" do formato compacto. Corrigido em 2026-09-04: a versão anterior deste documento mapeava o campo `Vendedor` para `agendadoPor`, o que está errado (ver nota abaixo). |
 | `Vendedor` | — (descartado) | Identifica quem vai **conduzir** a call — um papel diferente de quem agendou. Vendedores às vezes também agendam, mas no formato Slack o campo que sempre representa "quem agendou" é o nome do topo da mensagem, nunca `Vendedor`. **Decidido em 2026-09-04: descartar** — não vira campo novo (`vendedorResponsavel` ou similar); essa informação simplesmente não é persistida no sistema. |

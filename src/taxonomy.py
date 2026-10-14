@@ -1,5 +1,7 @@
 """Carrega e normaliza a taxonomia de origens/canais (seção 3 do CLAUDE.md)."""
 import json
+import re
+import unicodedata
 from pathlib import Path
 
 CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
@@ -40,8 +42,21 @@ def _match_canonical(value, canonical_list):
     return v, False
 
 
+def _fold(texto):
+    sem_acento = unicodedata.normalize("NFD", texto)
+    return "".join(c for c in sem_acento if not unicodedata.combining(c)).lower().strip()
+
+
 def normalize_origem(value, taxonomia):
+    """"indicação externa" puro = Associados; com sufixo ("indicação externa -
+    Cliente Magalu") = Referral de cliente — o nome do cliente é descartado
+    (seção 3 do CLAUDE.md)."""
     todas = taxonomia["origem_propria"] + taxonomia["origem_externa"]
+    folded = _fold(value or "")
+    if folded == "indicacao externa":
+        return "Associados", True
+    if folded.startswith("indicacao externa") and re.match(r"indica[cç][aã]o externa\s*[-–—]\s*\S", (value or "").strip(), re.I):
+        return "Referral de cliente", True
     return _match_canonical(value, todas)
 
 

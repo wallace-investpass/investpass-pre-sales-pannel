@@ -252,6 +252,40 @@
       "cargo": null,
       "raw": "",
       "criadoEm": "2026-11-10T13:59:02"
+    },
+    {
+      "id": "8466db0b",
+      "empresa": "Acrisure",
+      "data": "2026-11-04",
+      "origem": "Associados",
+      "origemReconhecida": true,
+      "origemTipo": "externa",
+      "canal": "Associados",
+      "canalReconhecido": true,
+      "agendadoPor": "Lucas Pedroso",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4255,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-11-10T13:56:42"
+    },
+    {
+      "id": "394c4e97",
+      "empresa": "Overlabs",
+      "data": "2026-11-13",
+      "origem": "Reengaja",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "WhatsApp",
+      "canalReconhecido": true,
+      "agendadoPor": "Vinicius Almeida",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "raw": "",
+      "criadoEm": "2026-11-10T15:36:20"
     }
   ]
 }

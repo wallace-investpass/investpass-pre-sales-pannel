@@ -103,10 +103,22 @@ def parse_slack_block(header, body, ano=None, taxonomia=None):
     if "empresa" not in fields or "data" not in fields:
         return None
 
+    taxonomia = taxonomia or tax.load_taxonomia()
     canal_raw = fields.get("canal", "")
-    canal_principal = re.split(r'\s*-\s*', canal_raw, maxsplit=1)[0].strip()
+    partes_canal = re.split(r'\s*-\s*', canal_raw, maxsplit=1)
+    canal_principal = partes_canal[0].strip()
     if canal_principal.lower() in ("associada", "associado"):
         canal_principal = "Associados"
+    # "Whatsapp investPass - Caju": o "investPass" só diz que o número é da casa.
+    canal_principal = re.sub(r'\s*investpass\s*', ' ', canal_principal, flags=re.I).strip()
+
+    # Lead "inbound" cujo canal traz o nome de um parceiro ("... - Caju"): a origem
+    # é o parceiro (externa), não Landing Page; o sufixo é descartado (seção 3).
+    origem_raw = fields.get("origem", "")
+    if origem_raw.strip().lower() == "inbound" and len(partes_canal) > 1:
+        parceiro, reconhecido = tax.normalize_origem(partes_canal[1].strip(), taxonomia)
+        if reconhecido and tax.origem_tipo(parceiro, taxonomia) == "externa":
+            origem_raw = parceiro
 
     agendado_por = header.strip()
 
@@ -118,7 +130,7 @@ def parse_slack_block(header, body, ano=None, taxonomia=None):
     return _make_call(
         empresa=fields["empresa"],
         data_iso=data_iso,
-        origem_raw=fields.get("origem", ""),
+        origem_raw=origem_raw,
         canal_raw=canal_principal,
         agendado_por=agendado_por,
         no_show=False,

@@ -96,7 +96,9 @@ GRT Gratiam — 31/08 — CONARH — Ligação (Agendada por @Vinicius Almeida) 
 LinkedIn Vini · LinkedIn Seixas · LinkedIn Raolho · Lista fria · Landing Page · CONARH · Reengaja · Referral de cliente (lead indicado por um cliente atual — ex: Lojas Renner indicada pelo Magalu, PinPag indicada pela Stone; criada em 2026-10-14. O nome do cliente que indicou é descartado, como o sufixo do canal "associada - Fulano". Entra nos cards de canais próprios, mas só conta na meta/hero se agendada pelo Vinicius — seção 4, sem regra nova)
 
 **Origem do lead — canais externos (não entram na meta):**
-Associados (renomeada de "Indicação Externa" em 2026-09 — mesmo canal, nome novo) · Flash · Embaixadores
+Associados (renomeada de "Indicação Externa" em 2026-09 — mesmo canal, nome novo) · Flash · Embaixadores · Caju (empresa parceira, como a Flash; criada em 2026-11-10 — a FourSec Soluções veio com origem "inbound" e canal "Whatsapp investPass - Caju")
+
+**Parceiros entram como origem própria, nomeada pela empresa** (Flash, Caju…), sempre externa: não entram na meta, mas a call conta no hero/no-show pré-vendas se agendada pelo Vinicius (seção 4). No Slack, origem `inbound` + canal com o nome de um parceiro (`Whatsapp investPass - Caju`) vira origem = parceiro (Caju) e canal = `WhatsApp`; o sufixo do canal e o "investPass" são descartados. `inbound` sem parceiro no canal segue como hoje (não reconhecido → aviso da seção 6, a corrigir à mão; ex: Landing Page).
 
 **Atenção**: "Referral" continua existindo **só como canal de agendamento**; "Referral de cliente" é uma origem, valor separado (a PinPag, antes Associados + canal Referral, virou origem Referral de cliente + canal WhatsApp). No texto do Slack, `indicação externa` puro mapeia para Associados e `indicação externa - Cliente X` (qualquer sufixo após o traço) mapeia para Referral de cliente.
 

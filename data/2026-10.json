@@ -492,7 +492,7 @@
       "empresa": "FourSec Soluções",
       "data": "2026-10-29",
       "origem": "Caju",
-      "origemReconhecida": false,
+      "origemReconhecida": true,
       "origemTipo": "externa",
       "canal": "WhatsApp",
       "canalReconhecido": true,

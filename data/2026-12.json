@@ -1,0 +1,41 @@
+{
+  "mes": "2026-12",
+  "calls": [
+    {
+      "id": "9db90a83",
+      "empresa": "Keeta",
+      "data": "2026-12-07",
+      "origem": "Reengaja",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "Ligação",
+      "canalReconhecido": true,
+      "agendadoPor": "Vinicius Almeida",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": null,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-11-10T13:56:42"
+    },
+    {
+      "id": "6fe46737",
+      "empresa": "Grupo Guidoni",
+      "data": "2026-12-04",
+      "origem": "Reengaja",
+      "origemReconhecida": true,
+      "origemTipo": "propria",
+      "canal": "Ligação",
+      "canalReconhecido": true,
+      "agendadoPor": "Vinicius Almeida",
+      "status": "a_realizar",
+      "noShow": false,
+      "pipedriveId": 4268,
+      "contato": null,
+      "cargo": null,
+      "raw": "",
+      "criadoEm": "2026-11-10T13:56:42"
+    }
+  ]
+}
